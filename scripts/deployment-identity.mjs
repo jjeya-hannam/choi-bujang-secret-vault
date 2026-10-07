@@ -17,7 +17,7 @@ export function deploymentIdentity(env, config) {
   const host = env.VERCEL_URL;
 
   const supportedStep =
-    config?.step === 1 || config?.step === 2;
+    Number.isInteger(config?.step) && config.step >= 1 && config.step <= 12;
 
   if (
     env.VERCEL_GIT_PROVIDER !== 'github'
