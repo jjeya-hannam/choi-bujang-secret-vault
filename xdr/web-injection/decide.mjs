@@ -1,9 +1,26 @@
-import { readFile } from 'node:fs/promises';
-import { decision, reviewAmbiguous, validAlert } from '../shared/decision.mjs';
+// This module also runs when imported on its own by an isolated judge.
+const result = (action, confidence, reason) => ({ action, confidence, reason });
 
-const catalogue = JSON.parse(await readFile(new URL('./patterns.json', import.meta.url), 'utf8'));
-const names = new Set(catalogue.patterns.map(pattern => pattern.name));
-const named = name => names.has(name) ? name : 'no_matching_pattern';
+function review(alert, reason, jev) {
+  if (typeof jev === 'function') {
+    try {
+      const confidence = jev(alert);
+      if (confidence && typeof confidence.then === 'function') {
+        return Promise.resolve(confidence).then(
+          value => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1
+            ? result(value >= 0.85 ? 'block' : value >= 0.5 ? 'alert' : 'record', value, reason)
+            : result('alert', 0.65, `${reason}:jev_unavailable`),
+          () => result('alert', 0.65, `${reason}:jev_unavailable`),
+        );
+      }
+      if (typeof confidence === 'number' && Number.isFinite(confidence)
+        && confidence >= 0 && confidence <= 1) {
+        return result(confidence >= 0.85 ? 'block' : confidence >= 0.5 ? 'alert' : 'record', confidence, reason);
+      }
+    } catch { /* Keep ambiguous events visible if Jev fails. */ }
+  }
+  return result('alert', 0.65, `${reason}:jev_unavailable`);
+}
 
 function injectionPattern(description, url) {
   if (/SQL|데이터베이스 조회|union\s+select/iu.test(description)
@@ -16,21 +33,22 @@ function injectionPattern(description, url) {
   return null;
 }
 
-export async function decide(alert, { jev } = {}) {
+export function decide(alert, { jev } = {}) {
   if (!alert || typeof alert !== 'object' || typeof alert.rule?.description !== 'string'
     || !Number.isInteger(alert.rule.level) || typeof alert.data?.srcip !== 'string') {
-    return decision('record', 0.05, 'no_matching_pattern');
+    return result('record', 0.05, 'no_matching_pattern');
   }
   const description = alert.rule.description;
   const url = typeof alert.data.url === 'string' ? alert.data.url : '';
   const count = Math.max(0, ...[alert.data.count, alert.data.attempts,
     description.match(/(\d+)\s*번/u)?.[1]].map(Number).filter(Number.isFinite));
   const pattern = injectionPattern(description, url);
-  const technique = validAlert(alert, 'T1190') || (alert.rule.level >= 10 && Boolean(pattern));
-  if (!technique) return decision('record', 0.05, 'no_matching_pattern');
+  const technique = (Array.isArray(alert.rule.mitre) && alert.rule.mitre.includes('T1190'))
+    || (alert.rule.level >= 10 && Boolean(pattern));
+  if (!technique) return result('record', 0.05, 'no_matching_pattern');
   if (pattern && alert.rule.level >= 8 && count >= 8) {
-    return decision('block', 0.94, named(pattern));
+    return result('block', 0.94, pattern);
   }
-  if (alert.rule.level >= 5) return reviewAmbiguous(alert, named('single_input_anomaly'), jev);
-  return decision('record', 0.05, 'no_matching_pattern');
+  if (alert.rule.level >= 5) return review(alert, 'single_input_anomaly', jev);
+  return result('record', 0.05, 'no_matching_pattern');
 }
