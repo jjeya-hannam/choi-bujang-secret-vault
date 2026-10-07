@@ -28,7 +28,7 @@
   </style>
 </head>
 <body>
-  <header><div class="brand">BYTE BACK / VAULT</div><div class="badge">ZERO TRUST LAB · 04</div></header>
+  <header><div class="brand">BYTE BACK / VAULT</div><div class="badge">ZERO TRUST LAB · 05</div></header>
   <main>
     <div class="eyebrow">Protected notes · Access controlled</div>
     <h1>자료는 로그인 뒤에만 열립니다.</h1>
@@ -63,14 +63,34 @@
   </main>
   <footer>학습용 가상 자료만 사용합니다 · 개인 정보와 서버 비밀 키는 공개 파일에 넣지 않습니다.</footer>
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/+esm';
-    const auth = createClient('https://jhzacbeqofunaclorlxv.supabase.co', 'sb_publishable_enfjiqnyw4VcNVZ2zJOHHA_1rq3pIPC');
     const $ = (id) => document.getElementById(id);
     let session = null;
     let editing = null;
     let currentNotes = [];
     function message(value, error=false) { $('message').textContent = value; $('message').className = error ? 'error' : ''; }
+    async function authRequest(action, fields={}) {
+      const response = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action,...fields}), cache:'no-store' });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || '인증 요청이 거부됐습니다.');
+      return data;
+    }
+    function saveSession(next) {
+      session = next && typeof next.access_token === 'string' ? next : null;
+      if (session) sessionStorage.setItem('vault_session', JSON.stringify(session));
+      else sessionStorage.removeItem('vault_session');
+    }
+    async function restoreSession() {
+      let saved;
+      try { saved = JSON.parse(sessionStorage.getItem('vault_session') || 'null'); } catch { saved = null; }
+      if (!saved?.refresh_token) { saveSession(null); return; }
+      try { const data=await authRequest('refresh',{refreshToken:saved.refresh_token}); saveSession(data.session); }
+      catch { saveSession(null); }
+    }
     async function request(path, options={}) {
+      if (session?.refresh_token && session.expires_at && session.expires_at <= Math.floor(Date.now()/1000)+60) {
+        try { const data=await authRequest('refresh',{refreshToken:session.refresh_token}); saveSession(data.session); }
+        catch { saveSession(null); render(); throw new Error('세션이 만료됐습니다. 다시 로그인하세요.'); }
+      }
       const token = session?.access_token;
       if (!token) throw new Error('로그인이 필요합니다.');
       const response = await fetch(path, { ...options, headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...(options.headers || {}) }, cache:'no-store' });
@@ -100,14 +120,13 @@
       if (!session) { currentNotes=[]; render(); return; }
       const data=await request('/api/notes'); currentNotes=data.notes; render();
     }
-    $('auth-form').addEventListener('submit',async(e)=>{e.preventDefault(); const email=$('email').value.trim(); const password=$('password').value; const {data,error}=await auth.auth.signInWithPassword({email,password}); if(error) {message(error.message,true);return;} session=data.session; $('password').value=''; message('로그인했습니다.'); await loadNotes().catch(err=>message(err.message,true));});
-    $('signup').addEventListener('click',async()=>{const email=$('email').value.trim();const password=$('password').value;if(!email||!password){message('이메일과 비밀번호를 입력하세요.',true);return;} const {data,error}=await auth.auth.signUp({email,password});if(error){message(error.message,true);return;}message(data.session?'계정이 만들어졌습니다.':'계정 확인 메일을 보냈습니다. 메일 확인 뒤 로그인하세요.');$('password').value='';});
-    $('logout').addEventListener('click',async()=>{await auth.auth.signOut();session=null;currentNotes=[];editing=null;render();message('로그아웃했습니다.');});
+    $('auth-form').addEventListener('submit',async(e)=>{e.preventDefault();try{const data=await authRequest('signIn',{email:$('email').value.trim(),password:$('password').value});saveSession(data.session);$('password').value='';message('로그인했습니다.');await loadNotes();}catch(err){message(err.message,true);}});
+    $('signup').addEventListener('click',async()=>{try{const data=await authRequest('signUp',{email:$('email').value.trim(),password:$('password').value});saveSession(data.session);message(data.session?'계정이 만들어졌습니다.':'계정 확인 메일을 보냈습니다. 메일 확인 뒤 로그인하세요.');$('password').value='';if(session) await loadNotes();}catch(err){message(err.message,true);}});
+    $('logout').addEventListener('click',()=>{saveSession(null);currentNotes=[];editing=null;render();message('로그아웃했습니다.');});
     $('refresh').addEventListener('click',()=>loadNotes().catch(err=>message(err.message,true)));
     $('cancel').addEventListener('click',()=>{editing=null;$('note-form').reset();$('save').textContent='메모 추가';$('cancel').hidden=true;});
     $('note-form').addEventListener('submit',async(e)=>{e.preventDefault();const payload={title:$('title').value.trim(),body:$('body').value};try{await request(editing?'/api/notes/'+encodeURIComponent(editing):'/api/notes',{method:editing?'PUT':'POST',body:JSON.stringify(payload)});editing=null;$('note-form').reset();$('save').textContent='메모 추가';$('cancel').hidden=true;await loadNotes();message('메모를 저장했습니다.');}catch(err){message(err.message,true);}});
-    const {data}=await auth.auth.getSession();session=data.session;await loadNotes().catch(err=>message(err.message,true));
-    auth.auth.onAuthStateChange((_event,next)=>{if(next?.access_token!==session?.access_token){session=next;loadNotes().catch(err=>message(err.message,true));}});
+    await restoreSession();await loadNotes().catch(err=>message(err.message,true));
   </script>
 </body>
 </html>
