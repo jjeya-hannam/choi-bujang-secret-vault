@@ -1,6 +1,19 @@
 // The student changes this check as each stage adds an attack to the same app.
 // Never return tokens, private keys, real names, or note bodies.
 export async function runAttackChecks(config) {
+  if (config.step >= 3) {
+    const base = new URL(config.publicAppUrl);
+    const response = await fetch(new URL('/api/notes', base), {
+      redirect: 'error', signal: AbortSignal.timeout(10000),
+    });
+    const type = response.headers.get('content-type') ?? '';
+    let error = null;
+    if (type.includes('application/json')) {
+      try { error = (await response.json()).error; } catch { /* recorded below */ }
+    }
+    return [{ attackId: 'anonymous_note_read', expected: '비로그인 API 401 또는 403 JSON 거부',
+      observed: `HTTP ${response.status}, JSON 오류 ${typeof error === 'string' ? error : '없음'}` }];
+  }
   if (config.step !== 1) throw new Error('이 단계의 공격 점검을 src/attack-check.mjs에 구현해 주세요.');
   let app;
   try {

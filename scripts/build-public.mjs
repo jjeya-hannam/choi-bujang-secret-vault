@@ -46,10 +46,10 @@ if (config.step === 1) {
   console.log(
     '실습용 공개 자료를 public/data.json에 복사했습니다.'
   );
-} else if (config.step === 2) {
+} else if (config.step >= 2 && config.step <= 12) {
   if (data.notes.length !== 0) {
     throw new Error(
-      '2단계에서는 정적 data.json에 메모를 남기면 안 됩니다.'
+      '2단계 이후에는 정적 data.json에 메모를 남기면 안 됩니다.'
     );
   }
 
@@ -63,11 +63,11 @@ if (config.step === 1) {
   );
 
   console.log(
-    '2단계 정적 public/data.json을 빈 자료 목록으로 유지했습니다.'
+    '정적 public/data.json을 빈 자료 목록으로 유지했습니다.'
   );
 } else {
   throw new Error(
-    '현재 빌드 스크립트는 1~2단계만 지원합니다.'
+    '지원하지 않는 방어전 단계입니다.'
   );
 }
 

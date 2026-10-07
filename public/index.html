@@ -3,134 +3,111 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>BYTE BACK | 서버 자료실</title>
+  <meta name="color-scheme" content="dark">
+  <title>BYTE BACK · 보호된 자료실</title>
   <style>
-    :root {
-      color-scheme: dark;
-      font-family: system-ui, sans-serif;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: #101a28;
-      color: #ecf4ff;
-    }
-
-    main {
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 44px 22px 64px;
-    }
-
-    .eyebrow {
-      color: #8ad8df;
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: .08em;
-    }
-
-    h1 {
-      margin: 16px 0;
-      font-size: clamp(30px, 7vw, 48px);
-      line-height: 1.2;
-    }
-
-    p {
-      font-size: 17px;
-      line-height: 1.7;
-      color: #bfd0e5;
-    }
-
-    .notice {
-      margin: 26px 0;
-      padding: 18px;
-      border: 1px solid #d0a84f;
-      border-radius: 14px;
-      color: #fff0bf;
-      background: #5f4b1f55;
-    }
-
-    ul {
-      list-style: none;
-      display: grid;
-      gap: 12px;
-      padding: 0;
-    }
-
-    li {
-      border: 1px solid #51667c;
-      border-radius: 14px;
-      padding: 17px 19px;
-      background: #1a2a3d;
-    }
-
-    strong {
-      display: block;
-      font-size: 18px;
-      margin-bottom: 5px;
-    }
-
-    li span {
-      color: #bfd0e5;
-    }
+    :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#07101b;color:#ecf5ff}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 80% -10%,#16415a 0,transparent 40%),#07101b}
+    header,main,footer{max-width:1080px;margin:auto;padding-inline:24px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-block:24px;border-bottom:1px solid #254156}
+    .brand{font-size:13px;font-weight:800;letter-spacing:.22em;color:#82e8ee}.badge{font-size:12px;padding:8px 12px;border:1px solid #386071;border-radius:100px;color:#a7c8d7}
+    main{padding-block:64px 90px}.eyebrow{text-transform:uppercase;color:#8fe6e1;font-size:12px;font-weight:800;letter-spacing:.22em}
+    h1{font-size:clamp(36px,6vw,70px);line-height:1.08;letter-spacing:-.045em;max-width:720px;margin:14px 0}p{color:#b5c9d6;line-height:1.65}
+    .lead{font-size:18px;max-width:650px}.grid{display:grid;grid-template-columns:minmax(260px,360px) 1fr;gap:24px;margin-top:44px}
+    .panel{border:1px solid #2b5061;background:#0d1c2b;border-radius:20px;padding:26px;box-shadow:0 25px 70px #0005}
+    h2{font-size:21px;margin:0 0 8px}label{display:block;margin:18px 0 8px;font-size:13px;font-weight:700;color:#c4dae4}
+    input,textarea{width:100%;background:#081521;border:1px solid #466476;border-radius:10px;padding:12px 14px;color:#fff;font:inherit}
+    input:focus,textarea:focus,button:focus-visible{outline:2px solid #8be6e4;outline-offset:2px}
+    textarea{min-height:110px;resize:vertical}button{font:inherit;cursor:pointer;border:1px solid #4b7081;border-radius:10px;padding:11px 15px;background:#162d3e;color:#e8f8ff}
+    button:hover{background:#204157}.primary{border-color:#6ad4d6;background:#85e8e3;color:#052129;font-weight:800}.primary:hover{background:#a8f3ed}
+    .row{display:flex;gap:9px;flex-wrap:wrap;margin-top:20px}.small{font-size:13px}.muted{color:#9db6c4}
+    #message{min-height:24px;color:#b8ecdd;font-size:14px}#message.error{color:#ffd1be}
+    .note{padding:18px 0;border-top:1px solid #2d4b5d}.note:first-child{border-top:0}.note h3{margin:0 0 7px;font-size:17px}.note p{white-space:pre-wrap;margin:0}
+    #workspace[hidden],#auth-panel[hidden]{display:none}footer{font-size:12px;color:#8ba6b5;padding-bottom:30px}
+    @media(max-width:720px){.grid{grid-template-columns:1fr}main{padding-block:42px}header{padding-block:18px}}
   </style>
 </head>
 <body>
+  <header><div class="brand">BYTE BACK / VAULT</div><div class="badge">ZERO TRUST LAB · 03</div></header>
   <main>
-    <div class="eyebrow">BYTE BACK · 2단계 자료 분리</div>
-    <h1>서버 자료실</h1>
-
-    <p>
-      가상 자료는 정적 파일에서 제거하고 학습용 DB로 옮겼습니다.
-    </p>
-
-    <div class="notice">
-      현재 서버 API 주소에는 아직 로그인 보호가 없습니다.
-      이 공개 API가 다음 단계에서 막을 약점입니다.
+    <div class="eyebrow">Protected notes · Access controlled</div>
+    <h1>자료는 로그인 뒤에만 열립니다.</h1>
+    <p class="lead">학습용 가상 메모를 보관하는 자료실입니다. 서버가 로그인 토큰을 직접 확인하고, 메모는 검증된 계정별로 분리합니다.</p>
+    <div class="grid">
+      <section class="panel" id="auth-panel" aria-labelledby="auth-heading">
+        <h2 id="auth-heading">계정으로 들어가기</h2>
+        <p class="small">Supabase Auth 이메일·비밀번호 로그인. 비밀번호는 이 사이트의 서버에 저장하지 않습니다.</p>
+        <form id="auth-form">
+          <label for="email">이메일</label><input id="email" type="email" autocomplete="email" required>
+          <label for="password">비밀번호</label><input id="password" type="password" autocomplete="current-password" required>
+          <div class="row"><button class="primary" type="submit">로그인</button><button type="button" id="signup">계정 만들기</button></div>
+        </form>
+      </section>
+      <section class="panel" id="workspace" hidden aria-labelledby="workspace-heading">
+        <h2 id="workspace-heading">내 가상 메모</h2>
+        <p class="small muted">현재 세션에서만 편집할 수 있습니다.</p>
+        <div class="row"><button id="logout" type="button">로그아웃</button><button id="refresh" type="button">목록 새로고침</button></div>
+        <form id="note-form">
+          <label for="title">제목</label><input id="title" maxlength="160" required>
+          <label for="body">내용</label><textarea id="body" maxlength="10000"></textarea>
+          <div class="row"><button class="primary" type="submit" id="save">메모 추가</button><button type="button" id="cancel" hidden>수정 취소</button></div>
+        </form>
+      </section>
+      <section class="panel" aria-labelledby="list-heading">
+        <h2 id="list-heading">자료 목록</h2>
+        <p id="locked" class="small">잠김 · 로그인 전에는 자료를 요청하지 않습니다.</p>
+        <div id="notes" aria-live="polite"></div>
+      </section>
     </div>
-
-    <ul id="notes" aria-live="polite">
-      <li>가상 자료를 불러오는 중입니다.</li>
-    </ul>
+    <p id="message" role="status" aria-live="polite"></p>
   </main>
-
+  <footer>학습용 가상 자료만 사용합니다 · 개인 정보와 서버 비밀 키는 공개 파일에 넣지 않습니다.</footer>
   <script type="module">
-    const list = document.querySelector('#notes');
-
-    try {
-      const response = await fetch('/api/notes', {
-        cache: 'no-store'
-      });
-
-      if (!response.ok) {
-        throw new Error('서버 자료를 읽을 수 없습니다.');
-      }
-
-      const data = await response.json();
-
-      if (!Array.isArray(data.notes)) {
-        throw new Error('자료 형식이 맞지 않습니다.');
-      }
-
-      list.replaceChildren(
-        ...data.notes.map((note) => {
-          const item = document.createElement('li');
-          const title = document.createElement('strong');
-          const content = document.createElement('span');
-
-          title.textContent = note.title;
-          content.textContent = note.content;
-
-          item.append(title, content);
-          return item;
-        })
-      );
-    } catch (error) {
-      const item = document.createElement('li');
-      item.textContent = error.message;
-      list.replaceChildren(item);
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/+esm';
+    const auth = createClient('https://jhzacbeqofunaclorlxv.supabase.co', 'sb_publishable_enfjiqnyw4VcNVZ2zJOHHA_1rq3pIPC');
+    const $ = (id) => document.getElementById(id);
+    let session = null;
+    let editing = null;
+    let currentNotes = [];
+    function message(value, error=false) { $('message').textContent = value; $('message').className = error ? 'error' : ''; }
+    async function request(path, options={}) {
+      const token = session?.access_token;
+      if (!token) throw new Error('로그인이 필요합니다.');
+      const response = await fetch(path, { ...options, headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...(options.headers || {}) }, cache:'no-store' });
+      if (response.status === 204) return null;
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || '서버 요청이 거부됐습니다.');
+      return data;
     }
+    function render() {
+      $('auth-panel').hidden = !!session;
+      $('workspace').hidden = !session;
+      $('locked').hidden = !!session;
+      $('notes').replaceChildren();
+      if (!session) return;
+      if (!currentNotes.length) { const p=document.createElement('p'); p.textContent='아직 내 메모가 없습니다.'; $('notes').append(p); return; }
+      for (const note of currentNotes) {
+        const article=document.createElement('article'); article.className='note';
+        const h=document.createElement('h3'); h.textContent=note.title;
+        const p=document.createElement('p'); p.textContent=note.body;
+        const controls=document.createElement('div'); controls.className='row';
+        const edit=document.createElement('button'); edit.type='button'; edit.textContent='수정'; edit.onclick=()=>{ editing=note.id; $('title').value=note.title; $('body').value=note.body; $('save').textContent='수정 저장'; $('cancel').hidden=false; $('title').focus(); };
+        const remove=document.createElement('button'); remove.type='button'; remove.textContent='삭제'; remove.onclick=async()=>{ if (!confirm('이 가상 메모를 삭제할까요?')) return; try { await request('/api/notes/'+encodeURIComponent(note.id),{method:'DELETE'}); await loadNotes(); message('메모를 삭제했습니다.'); } catch(e){message(e.message,true);} };
+        controls.append(edit,remove); article.append(h,p,controls); $('notes').append(article);
+      }
+    }
+    async function loadNotes() {
+      if (!session) { currentNotes=[]; render(); return; }
+      const data=await request('/api/notes'); currentNotes=data.notes; render();
+    }
+    $('auth-form').addEventListener('submit',async(e)=>{e.preventDefault(); const email=$('email').value.trim(); const password=$('password').value; const {data,error}=await auth.auth.signInWithPassword({email,password}); if(error) {message(error.message,true);return;} session=data.session; $('password').value=''; message('로그인했습니다.'); await loadNotes().catch(err=>message(err.message,true));});
+    $('signup').addEventListener('click',async()=>{const email=$('email').value.trim();const password=$('password').value;if(!email||!password){message('이메일과 비밀번호를 입력하세요.',true);return;} const {data,error}=await auth.auth.signUp({email,password});if(error){message(error.message,true);return;}message(data.session?'계정이 만들어졌습니다.':'계정 확인 메일을 보냈습니다. 메일 확인 뒤 로그인하세요.');$('password').value='';});
+    $('logout').addEventListener('click',async()=>{await auth.auth.signOut();session=null;currentNotes=[];editing=null;render();message('로그아웃했습니다.');});
+    $('refresh').addEventListener('click',()=>loadNotes().catch(err=>message(err.message,true)));
+    $('cancel').addEventListener('click',()=>{editing=null;$('note-form').reset();$('save').textContent='메모 추가';$('cancel').hidden=true;});
+    $('note-form').addEventListener('submit',async(e)=>{e.preventDefault();const payload={title:$('title').value.trim(),body:$('body').value};try{await request(editing?'/api/notes/'+encodeURIComponent(editing):'/api/notes',{method:editing?'PUT':'POST',body:JSON.stringify(payload)});editing=null;$('note-form').reset();$('save').textContent='메모 추가';$('cancel').hidden=true;await loadNotes();message('메모를 저장했습니다.');}catch(err){message(err.message,true);}});
+    const {data}=await auth.auth.getSession();session=data.session;await loadNotes().catch(err=>message(err.message,true));
+    auth.auth.onAuthStateChange((_event,next)=>{if(next?.access_token!==session?.access_token){session=next;loadNotes().catch(err=>message(err.message,true));}});
   </script>
 </body>
 </html>
