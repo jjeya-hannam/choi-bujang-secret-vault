@@ -18,6 +18,15 @@ export function deploymentIdentity(env, config) {
 
   const supportedStep =
     Number.isInteger(config?.step) && config.step >= 1 && config.step <= 12;
+  const originalApi = config?.originalApiUrl;
+  let originalUrl = null;
+  if (config?.step >= 5) {
+    try {
+      originalUrl = new URL(originalApi);
+    } catch {
+      throw new Error('5단계 원본 자료 API 주소를 확인하세요.');
+    }
+  }
 
   if (
     env.VERCEL_GIT_PROVIDER !== 'github'
@@ -29,6 +38,12 @@ export function deploymentIdentity(env, config) {
     || !SHA.test(commit || '')
     || !HOST.test(host || '')
     || !supportedStep
+    || (config.step >= 3 && (!Array.isArray(config.allowedRoutes)
+      || config.allowedRoutes.length === 0
+      || config.allowedRoutes.some(route => typeof route !== 'string' || !route.trim())))
+    || (config.step >= 5 && (originalUrl.protocol !== 'https:'
+      || originalUrl.username || originalUrl.password
+      || originalUrl.search || originalUrl.hash))
     || typeof config.judgeIssuer !== 'string'
     || !/^https:\/\/[a-z0-9-]+\.up\.railway\.app\/defense\/judge$/iu
       .test(config.judgeIssuer)
@@ -49,6 +64,8 @@ export function deploymentIdentity(env, config) {
     publicAppUrl:
       `https://${host.toLowerCase()}`,
     judgeIssuer: config.judgeIssuer,
-    sampleMarker: config.sampleMarker
+    sampleMarker: config.sampleMarker,
+    ...(config.step >= 3 ? { allowedRoutes: config.allowedRoutes } : {}),
+    ...(config.step >= 5 ? { originalApiUrl: originalUrl.href } : {})
   };
 }
