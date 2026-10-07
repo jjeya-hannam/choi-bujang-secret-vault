@@ -2,6 +2,7 @@ import {
   copyFile,
   mkdir,
   readFile,
+  rm,
   writeFile
 } from 'node:fs/promises';
 
@@ -53,18 +54,17 @@ if (config.step === 1) {
     );
   }
 
-  await writeFile(
-    output,
-    `${JSON.stringify({
-      sampleMarker: config.sampleMarker,
-      notes: []
-    }, null, 2)}\n`,
-    'utf8'
-  );
-
-  console.log(
-    '정적 public/data.json을 빈 자료 목록으로 유지했습니다.'
-  );
+  if (config.step === 2) {
+    await writeFile(
+      output,
+      `${JSON.stringify({ sampleMarker: config.sampleMarker, notes: [] }, null, 2)}\n`,
+      'utf8'
+    );
+    console.log('2단계 정적 자료 목록을 빈 배열로 유지했습니다.');
+  } else {
+    await rm(output, { force: true });
+    console.log('3단계 이후 공개 data.json을 배포 결과에서 제거했습니다.');
+  }
 } else {
   throw new Error(
     '지원하지 않는 방어전 단계입니다.'
