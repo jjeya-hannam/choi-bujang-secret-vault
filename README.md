@@ -14,10 +14,13 @@
 - 브라우저는 Supabase 공개 키를 담지 않고, 모든 메모 CRUD를 같은 출처의 서버 함수로 보냅니다. 세션 복원과 갱신도 서버 함수에서 처리합니다.
 - Vercel 환경변수 `SUPABASE_URL`, `SUPABASE_SECRET_KEY`는 서버에서만 읽습니다. 브라우저 묶음에는 Supabase URL이나 공개 키가 없습니다.
 - `vercel.json`은 첫 화면에 `X-Content-Type-Options: nosniff`를 붙입니다.
+- `/bonus.html`은 두 수업용 XDR 경보 묶음의 재실행 결과를 읽기 전용으로 보여 줍니다. 무차별 로그인 28건과 웹 입력 조작 26건의 판정 코드, 패턴 근거, 시험 결과는 `xdr/`에 있습니다. 외부 Jev 서비스와 실제 운영 게이트웨이는 연결되지 않아 이 화면은 모의 방어 기록입니다.
 
 ## 다시 실행하고 확인
 
 `npm install` 후 `npm run build -- --local`로 정적 화면을 만들 수 있습니다. 실제 서버 함수는 Vercel에 배포된 주소에서 확인합니다. 로그인 없이 `/api/notes`를 열면 401 JSON 오류여야 합니다. 계정 생성과 로그인은 Supabase Auth 설정과 사용자 확인이 완료되어야 동작합니다.
+
+열린 보너스 작전은 `npm run xdr:run -- brute-force`, `npm run xdr:run -- web-injection`으로 다시 실행합니다. `result.json`의 차단·알림·기록 건수, `alerts.log`의 경보 한 줄, `deny-rules.json`의 만료 시각·근거 경보 ID를 확인합니다. 실제 소스 주소와 학생 로그인 자료는 로그에 넣지 않습니다.
 
 학습용 DB의 기존 메모 네 건은 본문을 유지하며 UUID 식별자만 추가했습니다. 아직 소유자가 지정되지 않은 기존 행은 로그인한 계정의 목록에 나타나지 않습니다. 실제 학생 기록과 비밀 키를 넣지 않습니다.
 

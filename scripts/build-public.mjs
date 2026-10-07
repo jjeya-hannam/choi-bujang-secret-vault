@@ -41,6 +41,23 @@ await mkdir(
   { recursive: true }
 );
 
+// Publish only the synthetic decision summaries, never raw Wazuh events.
+const xdrOutput = resolve(root, 'public', 'xdr');
+await mkdir(xdrOutput, { recursive: true });
+for (const moduleKey of ['brute-force', 'web-injection']) {
+  try {
+    const result = JSON.parse(await readFile(resolve(root, 'xdr', moduleKey, 'result.json'), 'utf8'));
+    if (result?.schema !== 'aleph.xdr.result.v1' || result.moduleKey !== moduleKey
+      || !Array.isArray(result.decisions)) throw new Error('INVALID_XDR_RESULT');
+    await writeFile(resolve(xdrOutput, `${moduleKey}.json`),
+      `${JSON.stringify({ schema: result.schema, moduleKey, counts: result.counts,
+        decisions: result.decisions }, null, 2)}\n`, 'utf8');
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+    await rm(resolve(xdrOutput, `${moduleKey}.json`), { force: true });
+  }
+}
+
 if (config.step === 1) {
   await copyFile(source, output);
 

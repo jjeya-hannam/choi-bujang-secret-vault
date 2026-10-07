@@ -1,0 +1,32 @@
+{
+  "schema": "aleph.xdr.patterns.v1",
+  "moduleKey": "web-injection",
+  "source": "https://attack.mitre.org/techniques/T1190/",
+  "patterns": [
+    {
+      "name": "repeated_sql_injection",
+      "condition": "SQL 구문 조작 표기가 같은 주소에서 8회 이상 반복되고 경보 수준이 10 이상",
+      "evidence": "MITRE ATT&CK T1190과 OWASP SQL Injection은 공개 웹 입력을 이용한 SQL 구문 조작을 설명한다. https://community.owasp.org/attacks/SQL_Injection"
+    },
+    {
+      "name": "repeated_script_injection",
+      "condition": "스크립트 삽입 표기가 같은 주소에서 8회 이상 반복되고 경보 수준이 10 이상",
+      "evidence": "MITRE ATT&CK T1190의 공개 앱 악용 범주와 OWASP XSS 자료가 스크립트 삽입 위험을 설명한다. https://community.owasp.org/attacks/xss/"
+    },
+    {
+      "name": "repeated_path_traversal",
+      "condition": "상위 경로 이동 표기가 같은 주소에서 8회 이상 반복되고 경보 수준이 10 이상",
+      "evidence": "OWASP Path Traversal은 ../ 같은 상위 경로 이동을 이용한 파일 접근을 설명한다. https://community.owasp.org/attacks/Path_Traversal"
+    },
+    {
+      "name": "repeated_command_separator",
+      "condition": "명령 구분자 표기가 같은 주소에서 8회 이상 반복되고 경보 수준이 10 이상",
+      "evidence": "OWASP Command Injection은 입력이 명령 실행 문맥으로 전달될 때 명령 추가 위험을 설명한다. https://community.owasp.org/attacks/Command_Injection"
+    },
+    {
+      "name": "single_input_anomaly",
+      "condition": "T1190 경보가 있지만 반복이나 실제 주입 표기가 충분하지 않은 경우",
+      "evidence": "MITRE ATT&CK T1190은 실제 악용 신호의 상관분석을 설명한다. 단일 검색어·단어만으로 자동 차단하지 않는다."
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BYTE BACK · XDR 실습 결과</title>
+  <style>
+    :root{color-scheme:dark;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#07101b;color:#eaf5fd}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% 0,#123951,transparent 42%),#07101b;min-height:100vh}
+    header,main,footer{max-width:1120px;margin:auto;padding:24px}header{display:flex;justify-content:space-between;gap:24px;align-items:center;border-bottom:1px solid #2a4e62}
+    a{color:#8fe6e1}a:focus-visible{outline:2px solid #8fe6e1;outline-offset:4px}.brand{font-size:13px;letter-spacing:.2em;font-weight:800;color:#8fe6e1}
+    main{padding-top:62px;padding-bottom:80px}.eyebrow{color:#8fe6e1;font-size:12px;font-weight:800;letter-spacing:.24em;text-transform:uppercase}
+    h1{font-size:clamp(36px,6vw,64px);line-height:1.1;letter-spacing:-.045em;margin:14px 0}p{color:#b8ccd7;line-height:1.7}.lead{max-width:720px;font-size:18px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:40px}.card{border:1px solid #2d5365;background:#0e2030;border-radius:20px;padding:28px;box-shadow:0 24px 70px #0004}
+    h2{margin:0 0 12px;font-size:24px}.counts{display:flex;flex-wrap:wrap;gap:12px;margin:25px 0}.count{min-width:105px;padding:14px;border:1px solid #3a6374;border-radius:12px;background:#122b3c}.count strong{display:block;font-size:28px}.count span{font-size:12px;color:#bbd4df;text-transform:uppercase}
+    .block{color:#ffc3b3}.alert{color:#ffdf9b}.record{color:#a7ede1}details{border-top:1px solid #315061;padding-top:17px}summary{cursor:pointer;font-weight:700;color:#d9f3f5}summary:focus-visible{outline:2px solid #8fe6e1}
+    ul{padding-left:20px;max-height:270px;overflow:auto}li{margin:8px 0;font:13px/1.5 ui-monospace,Consolas,monospace;color:#c9dce5}footer{border-top:1px solid #2a4e62;font-size:12px;color:#8faebd}
+    @media(max-width:730px){.grid{grid-template-columns:1fr}main{padding-top:38px}header{align-items:flex-start;flex-direction:column}}
+  </style>
+</head>
+<body>
+  <header><div class="brand">BYTE BACK / XDR LAB</div><a href="/">자료실로 돌아가기</a></header>
+  <main>
+    <div class="eyebrow">Synthetic Wazuh fixtures · decision record</div>
+    <h1>명확한 공격만 차단 후보로.</h1>
+    <p class="lead">수업용 경보를 결정 모듈에 다시 흘려 보낸 결과입니다. 애매한 신호는 알림으로 남기고 정상 이벤트는 기록합니다. 실제 운영 트래픽 차단이나 외부 Jev 연결 결과를 뜻하지 않습니다.</p>
+    <div id="cards" class="grid" aria-live="polite"></div>
+    <p>근거: <a href="https://attack.mitre.org/techniques/T1110/">MITRE T1110</a> · <a href="https://attack.mitre.org/techniques/T1190/">MITRE T1190</a> · <a href="https://github.com/jjeya-hannam/choi-bujang-secret-vault/tree/main/xdr">공개 소스</a></p>
+  </main>
+  <footer>문서용 주소와 가상 계정만 사용한 실습 결과입니다. 결과 파일에는 원본 경보 본문이나 비밀값이 없습니다.</footer>
+  <script type="module">
+    const cards=document.getElementById('cards');
+    const modules=[['brute-force','무차별 로그인'],['web-injection','웹 입력 조작']];
+    for(const [key,title] of modules){
+      const card=document.createElement('section');card.className='card';
+      const heading=document.createElement('h2');heading.textContent=title;card.append(heading);
+      try{
+        const response=await fetch('/xdr/'+key+'.json',{cache:'no-store'});
+        if(!response.ok) throw Error('결과 파일을 읽을 수 없습니다.');
+        const data=await response.json();
+        if(data.schema!=='aleph.xdr.result.v1'||data.moduleKey!==key||!Array.isArray(data.decisions)) throw Error('결과 형식이 다릅니다.');
+        const intro=document.createElement('p');intro.textContent=`경보 ${data.decisions.length}건을 다시 실행했습니다.`;card.append(intro);
+        const counts=document.createElement('div');counts.className='counts';
+        for(const action of ['block','alert','record']){
+          const item=document.createElement('div');item.className='count';
+          const value=document.createElement('strong');value.className=action;value.textContent=String(data.counts[action]??0);
+          const label=document.createElement('span');label.textContent=action;item.append(value,label);counts.append(item);
+        }
+        card.append(counts);
+        const details=document.createElement('details');const summary=document.createElement('summary');summary.textContent='경보별 판정 보기';details.append(summary);
+        const list=document.createElement('ul');for(const row of data.decisions){const item=document.createElement('li');item.textContent=`${row.alertId} · ${row.action} · ${row.reason}`;list.append(item);}details.append(list);card.append(details);
+      }catch(error){const p=document.createElement('p');p.textContent=`기록을 표시할 수 없습니다: ${error.message}`;card.append(p);}
+      cards.append(card);
+    }
+  </script>
+</body>
+</html>

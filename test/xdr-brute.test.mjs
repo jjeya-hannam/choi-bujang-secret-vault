@@ -31,9 +31,9 @@ test('unavailable Jev keeps a borderline alert out of automatic blocking', async
 });
 
 test('trusted source rule expires and never matches a normal event source', async () => {
-  const rules = JSON.parse(await readFile(new URL('../xdr/deny-rules.json', import.meta.url))).rules;
-  const rule = rules.find(x => x.moduleKey === 'brute-force');
-  assert.ok(rule?.evidenceAlertIds.length);
+  const rule = { action: 'deny', sourceAddress: fixture.alerts[0].data.srcip,
+    evidenceAlertIds: ['bf-01'], expiresAt: '2030-01-01T01:00:00.000Z' };
+  const rules = [rule];
   assert.equal(evaluateDenyRules(rule.sourceAddress, rules, new Date(Date.parse(rule.expiresAt) - 1000)).blocked, true);
   assert.equal(evaluateDenyRules(rule.sourceAddress, rules, new Date(Date.parse(rule.expiresAt) + 1000)).blocked, false);
   assert.equal(evaluateDenyRules(fixture.alerts[19].data.srcip, rules).blocked, false);

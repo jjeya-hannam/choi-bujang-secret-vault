@@ -43,4 +43,6 @@ node scripts/xdr-run.mjs brute-force
 
 `brute-force` 모듈은 28건을 읽고 block 10·alert 9·record 9로 나눕니다. `read-alerts.mjs`는 다섯 필드만 추출하며 설명의 비밀값 형태를 가립니다. 패턴 근거는 MITRE ATT&CK T1110입니다. 반복 시도가 명확한 문서용 주소만 만료 시각과 경보 ID가 붙은 `deny-rules.json`에 넣고, 검토할 건은 `alerts.log`에 남깁니다.
 
-`web-injection` 모듈은 별도 저장점에서 추가합니다. 두 모듈의 `decide(alert)`는 외부 Jev 연결이 주어지지 않은 현재 수업 실행기에서 애매한 경보를 `alert`로 안전하게 돌려줍니다. 외부 Jev가 연결돼 실패해도 같은 방식입니다. `ztna-overlay.mjs`는 신뢰할 수 있는 게이트웨이가 전달한 출발 주소만 받아 만료된 거부 규칙을 무시합니다. 현재 시작 상태의 SDP 판정기(`src/decider.mjs`)에는 출발 주소 입력 계약이 없으므로 실제 운영 트래픽 차단이 연결됐다고 주장하지 않습니다.
+`web-injection` 모듈은 26건을 읽고 block 8·alert 9·record 9로 나눕니다. 패턴 근거는 MITRE ATT&CK T1190과 OWASP의 SQL 주입, XSS, 경로 순회, 명령 주입 자료입니다. 단일 검색어를 주입 공격으로 오인해 자동 차단하지 않습니다.
+
+두 모듈의 `decide(alert)`는 외부 Jev 연결이 주어지지 않은 현재 수업 실행기에서 애매한 경보를 `alert`로 안전하게 돌려줍니다. 외부 Jev가 연결돼 실패해도 같은 방식입니다. `ztna-overlay.mjs`는 신뢰할 수 있는 게이트웨이가 전달한 출발 주소만 받아 만료된 거부 규칙을 무시합니다. 현재 시작 상태의 SDP 판정기(`src/decider.mjs`)에는 출발 주소 입력 계약이 없으므로 실제 운영 트래픽 차단이 연결됐다고 주장하지 않습니다.
