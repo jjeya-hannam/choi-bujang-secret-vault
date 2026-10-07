@@ -1,35 +1,87 @@
-import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import {
+  copyFile,
+  mkdir,
+  readFile,
+  writeFile
+} from 'node:fs/promises';
+
 import { resolve } from 'node:path';
 import { deploymentIdentity } from './deployment-identity.mjs';
 
 const root = resolve(import.meta.dirname, '..');
-const source = resolve(root, 'data.json');
-const output = resolve(root, 'public', 'data.json');
-const config = JSON.parse(await readFile(resolve(root, 'aleph.config.json'), 'utf8'));
-const data = JSON.parse(await readFile(source, 'utf8'));
+
+const source =
+  resolve(root, 'data.json');
+
+const output =
+  resolve(root, 'public', 'data.json');
+
+const config =
+  JSON.parse(
+    await readFile(
+      resolve(root, 'aleph.config.json'),
+      'utf8'
+    )
+  );
+
+const data =
+  JSON.parse(
+    await readFile(source, 'utf8')
+  );
 
 if (!Array.isArray(data.notes)) {
-  throw new Error('가상 자료 형식을 확인하세요. 실제 학생 자료를 넣으면 안 됩니다.');
+  throw new Error(
+    '가상 자료 형식을 확인하세요. 실제 학생 자료를 넣으면 안 됩니다.'
+  );
 }
 
-await mkdir(resolve(root, 'public'), { recursive: true });
+await mkdir(
+  resolve(root, 'public'),
+  { recursive: true }
+);
 
 if (config.step === 1) {
   await copyFile(source, output);
-  console.log('실습용 공개 자료를 public/data.json에 복사했습니다.');
+
+  console.log(
+    '실습용 공개 자료를 public/data.json에 복사했습니다.'
+  );
 } else if (config.step === 2) {
   if (data.notes.length !== 0) {
-    throw new Error('2단계에서는 정적 data.json에 메모를 남기면 안 됩니다.');
+    throw new Error(
+      '2단계에서는 정적 data.json에 메모를 남기면 안 됩니다.'
+    );
   }
-  await writeFile(output, '{\n  "sampleMarker": "SAMPLE_NOTE_1",\n  "notes": []\n}\n', 'utf8');
-  console.log('2단계 정적 public/data.json을 빈 자료 목록으로 유지했습니다.');
+
+  await writeFile(
+    output,
+    `${JSON.stringify({
+      sampleMarker: config.sampleMarker,
+      notes: []
+    }, null, 2)}\n`,
+    'utf8'
+  );
+
+  console.log(
+    '2단계 정적 public/data.json을 빈 자료 목록으로 유지했습니다.'
+  );
 } else {
-  throw new Error('현재 빌드 스크립트는 1~2단계만 지원합니다.');
+  throw new Error(
+    '현재 빌드 스크립트는 1~2단계만 지원합니다.'
+  );
 }
 
 if (!process.argv.includes('--local')) {
-  const identity = deploymentIdentity(process.env, config);
-  await writeFile(resolve(root, 'public', 'aleph.json'),
-    `${JSON.stringify(identity, null, 2)}\n`, 'utf8');
-  console.log('배포 저장소·커밋·주소를 public/aleph.json에 기록했습니다.');
+  const identity =
+    deploymentIdentity(process.env, config);
+
+  await writeFile(
+    resolve(root, 'public', 'aleph.json'),
+    `${JSON.stringify(identity, null, 2)}\n`,
+    'utf8'
+  );
+
+  console.log(
+    '배포 저장소·커밋·주소를 public/aleph.json에 기록했습니다.'
+  );
 }
