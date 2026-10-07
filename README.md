@@ -1,4 +1,4 @@
-# BYTE BACK 방어전 · 3단계 저장점
+# BYTE BACK 방어전 · 4단계 저장점
 
 2단계의 서버 자료 분리 위에 Supabase Auth 로그인과 서버 토큰 검증을 연결했습니다. 브라우저는 로그인 전 자료를 요청하지 않으며, 서버는 유효하지 않은 토큰에 `401` JSON 오류를 돌려줍니다.
 
@@ -9,6 +9,8 @@
 - `/api/notes`는 검증된 계정의 가상 메모 목록 조회와 추가를 처리합니다.
 - `/api/notes/:id`는 한 건 조회·수정·삭제를 처리합니다.
 - 서버는 `src/verify-login.mjs`로 학생 토큰과 심판 토큰을 검증하고, 브라우저의 `owner_id` 값은 사용하지 않습니다.
+- 모든 메모 CRUD는 서버에서 검증된 사용자 ID와 DB `owner_id`를 대조합니다. 다른 계정의 UUID로 요청하면 404입니다.
+- 학습용 `public.notes` 테이블은 anon 직접 권한을 회수했고, authenticated의 SELECT·INSERT·UPDATE·DELETE에는 각각 소유자 RLS 정책을 적용했습니다.
 - Vercel 환경변수 `SUPABASE_URL`, `SUPABASE_SECRET_KEY`는 서버에서만 읽습니다. 브라우저에는 공개용 Supabase Project URL과 publishable key만 있습니다.
 - `vercel.json`은 첫 화면에 `X-Content-Type-Options: nosniff`를 붙입니다.
 
