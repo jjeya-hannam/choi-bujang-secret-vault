@@ -38,3 +38,9 @@ node scripts/xdr-run.mjs brute-force
 `npm run xdr:run -- brute-force` 도 같은 명령입니다. 실행기는 해당 경보마다 `decide` 를 부르고, 결과를 `xdr/<moduleKey>/result.json` 에 씁니다. 형식은 `aleph.xdr.result.v1` 이고, `decisions` 에는 경보 id·행동·확신도·이유가, `counts` 에는 `block`·`alert`·`record` 건수가 있습니다.
 
 반환 형식이 틀린 경보는 `record` 로 남고, 오류 한 줄이 출력됩니다. 실행기 자체는 네트워크를 쓰지 않습니다. 판정자는 격리된 환경에서 같은 명령을 다시 실행해 결과를 봅니다. 이미 커밋된 `result.json` 만으로 판정이 끝나지 않습니다.
+
+## 열린 보너스 작전 구현
+
+`brute-force` 모듈은 28건을 읽고 block 10·alert 9·record 9로 나눕니다. `read-alerts.mjs`는 다섯 필드만 추출하며 설명의 비밀값 형태를 가립니다. 패턴 근거는 MITRE ATT&CK T1110입니다. 반복 시도가 명확한 문서용 주소만 만료 시각과 경보 ID가 붙은 `deny-rules.json`에 넣고, 검토할 건은 `alerts.log`에 남깁니다.
+
+`web-injection` 모듈은 별도 저장점에서 추가합니다. 두 모듈의 `decide(alert)`는 외부 Jev 연결이 주어지지 않은 현재 수업 실행기에서 애매한 경보를 `alert`로 안전하게 돌려줍니다. 외부 Jev가 연결돼 실패해도 같은 방식입니다. `ztna-overlay.mjs`는 신뢰할 수 있는 게이트웨이가 전달한 출발 주소만 받아 만료된 거부 규칙을 무시합니다. 현재 시작 상태의 SDP 판정기(`src/decider.mjs`)에는 출발 주소 입력 계약이 없으므로 실제 운영 트래픽 차단이 연결됐다고 주장하지 않습니다.
