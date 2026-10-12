@@ -1,5 +1,8 @@
 // The student changes this check as each stage adds an attack to the same app.
 // Never return tokens, private keys, real names, or note bodies.
+import { decide } from './decider.mjs';
+import { fixtureRequests } from '../scripts/fixture-7.mjs';
+
 export async function runAttackChecks(config) {
   if (config.step >= 3) {
     const base = new URL(config.publicAppUrl);
@@ -11,8 +14,21 @@ export async function runAttackChecks(config) {
     if (type.includes('application/json')) {
       try { error = (await response.json()).error; } catch { /* recorded below */ }
     }
-    return [{ attackId: 'anonymous_note_read', expected: '비로그인 API 401 또는 403 JSON 거부',
+    const attempts = [{ attackId: 'anonymous_note_read', expected: '비로그인 API 401 또는 403 JSON 거부',
       observed: `HTTP ${response.status}, JSON 오류 ${typeof error === 'string' ? error : '없음'}` }];
+    if (config.step >= 6) {
+      const { normal } = fixtureRequests();
+      for (const [attackId, deviceRegistered, expected] of [
+        ['local_registered_device', true, '로컬 가상 요청: 등록 기기 allow'],
+        ['local_unregistered_device', false, '로컬 가상 요청: 미등록 기기 deny/device_not_registered'],
+        ['local_unconfirmed_device', null, '로컬 가상 요청: 미확인 기기 deny/device_not_registered'],
+      ]) {
+        const result = await decide({ ...normal, deviceRegistered });
+        attempts.push({ attackId, expected,
+          observed: `로컬 판정기 직접 실행: ${result.decision}/${result.reasonCode}; 운영 엔진 및 심판 판정 아님` });
+      }
+    }
+    return attempts;
   }
   if (config.step !== 1) throw new Error('이 단계의 공격 점검을 src/attack-check.mjs에 구현해 주세요.');
   let app;
