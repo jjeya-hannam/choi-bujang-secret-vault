@@ -54,7 +54,6 @@ test('판정기는 정확 경로/method/구역을 검사하고 기능 경로와 
   const { normal } = fixtureRequests();
   for (const [method, path, route] of [
     ['GET', '/api/notes', 'GET /api/notes'], ['POST', '/api/notes', 'POST /api/notes'],
-    ['GET', `/api/notes/${noteId}`, 'GET /api/notes/:id'], ['PUT', `/api/notes/${noteId}`, 'PUT /api/notes/:id'],
   ]) assert.equal((await decide({ ...normal, method, path, route })).decision, 'allow');
   for (const request of [
     { ...normal, path: '/api/notes/export', route: 'GET /api/notes/:id' },
@@ -64,6 +63,21 @@ test('판정기는 정확 경로/method/구역을 검사하고 기능 경로와 
     { ...normal, method: 'PUT', path: `/api/announcements/${noteId}`, route: 'PUT /api/announcements/:id', role: 'instructor' },
     { ...normal, path: `/api/notes/${noteId}/export`, route: 'GET /api/notes/:id' },
   ]) assert.equal((await decide(request)).decision, 'deny');
+});
+
+test('UUID 형식과 재인증은 소유 권한을 부여하지 않는다', async () => {
+  const { normal } = fixtureRequests();
+  for (const subjectId of ['learner_fixture', 'other_fixture']) {
+    for (const method of ['GET', 'PUT', 'DELETE']) {
+      for (const source of ['none', 'judge_fixture']) {
+        const result = await decide({ ...normal, subjectId, method,
+          path: `/api/notes/${noteId}`, route: `${method} /api/notes/:id`,
+          signals: { ...normal.signals, source }, stepUp: { verified: true, authAgeSeconds: 60 } });
+        assert.equal(result.decision, 'deny');
+        assert.equal(result.reasonCode, 'policy_denied');
+      }
+    }
+  }
 });
 
 test('API에서 A의 자기 메모 읽기/수정은 허용하고 B의 A 메모 읽기/수정은 거부한다', async () => {

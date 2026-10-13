@@ -46,7 +46,8 @@ export async function runAttackChecks(config) {
       const { normal } = fixtureRequests();
       const id = '11111111-1111-4111-8111-111111111111';
       for (const [attackId, request, expected] of [
-        ['local_notes_route', { ...normal, path: `/api/notes/${id}`, route: 'GET /api/notes/:id' }, '로컬 가상 메모 읽기 구역 allow; API 소유자 검사는 별도'],
+        ['local_unbound_note', { ...normal, path: `/api/notes/${id}`, route: 'GET /api/notes/:id' }, '소유 권한이 확인되지 않은 UUID 단건 deny'],
+        ['local_other_subject', { ...normal, subjectId: 'other_fixture' }, '가상 본인 메모를 다른 주체가 요청하면 deny'],
         ['local_export_alias', { ...normal, path: '/api/notes/export', route: 'GET /api/notes/:id' }, '로컬 가상 export 별칭 deny'],
         ['local_announcement_edit', { ...normal, method: 'PUT', path: `/api/announcements/${id}`, route: 'PUT /api/announcements/:id' }, '로컬 가상 강사 권한 없는 공지 수정 deny'],
       ]) {

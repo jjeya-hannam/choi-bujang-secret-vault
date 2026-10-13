@@ -43,7 +43,9 @@ export async function decide(request) {
       || request.service !== 'notes' || request.queryLength !== 0
       || !resource
       || resource.route !== request.route
-      || (resource.ownerSubjectId !== undefined && resource.ownerSubjectId !== request.subjectId)
+      // A valid UUID identifies a resource, but does not grant ownership.
+      // Without a trusted owner binding, item access must fail closed.
+      || (resource.id !== null && resource.ownerSubjectId !== request.subjectId)
       || (resource.resourceId === RESOURCE_IDS.announcements && request.method !== 'GET')) {
     decision = 'deny';
     reasonCode = 'policy_denied';
