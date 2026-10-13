@@ -7,7 +7,7 @@ import { resourceRoute, RESOURCE_IDS, UUID_PATTERN } from './resource-policy.mjs
 const UUID = UUID_PATTERN;
 let cached;
 
-function services() {
+export function getNotesServices() {
   if (cached) return cached;
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SECRET_KEY;
@@ -68,7 +68,7 @@ function validFields(value) {
     && value.body.length <= 10000;
 }
 
-export function createNotesHandler(getServices = services, logDiagnostic = line => console.info(line)) {
+export function createNotesHandler(getServices = getNotesServices, logDiagnostic = line => console.info(line)) {
 return async function handleNotes(req, res, rawId) {
   const recordIdentity = responseDiagnostic(req, res, logDiagnostic);
   res.setHeader('Cache-Control', 'no-store');
@@ -99,10 +99,22 @@ return async function handleNotes(req, res, rawId) {
         return json(res, 400, 'INVALID_NOTE');
       }
       const noteId = body.id ?? randomUUID();
-      const { error } = await db.from('notes').insert({
-        note_id: noteId, owner_id: ownerId,
-        title: body.title.trim(), content: body.body,
-      });
+      // Only a signature-verified synthetic judge B creates a recovery snapshot.
+      // Both writes occur in one DB transaction; snapshot failure fails creation.
+      let result;
+      if (identity.kind === 'judge' && identity.identity === 'b') {
+        if (!UUID.test(identity.runId ?? '') || !UUID.test(ownerId ?? '')) return json(res, 401, 'AUTH_REQUIRED');
+        result = await db.rpc('stage10_create_judge_b_note', {
+          p_run_id: identity.runId, p_owner_id: ownerId, p_note_id: noteId,
+          p_title: body.title.trim(), p_content: body.body,
+        });
+      } else {
+        result = await db.from('notes').insert({
+          note_id: noteId, owner_id: ownerId,
+          title: body.title.trim(), content: body.body,
+        });
+      }
+      const { error } = result;
       if (error) {
         if (error.code === '23505') return json(res, 409, 'NOTE_EXISTS');
         throw error;
@@ -146,7 +158,7 @@ return async function handleNotes(req, res, rawId) {
 
 export const handleNotes = createNotesHandler();
 
-export function createAnnouncementHandler(getServices = services, logDiagnostic = line => console.info(line)) {
+export function createAnnouncementHandler(getServices = getNotesServices, logDiagnostic = line => console.info(line)) {
   return async function handleAnnouncement(req, res) {
     const recordIdentity = responseDiagnostic(req, res, logDiagnostic);
     res.setHeader('Cache-Control', 'no-store');

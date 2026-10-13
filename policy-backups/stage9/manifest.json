@@ -1,0 +1,23 @@
+{
+  "schema": "aleph.policy.snapshot.v1",
+  "version": "stage9-225e242",
+  "commit": "225e242573807cb7b225a7f8b5135983e9086720",
+  "files": [
+    {
+      "path": "src/decider.mjs",
+      "sha256": "bebe31d08205a7908e5001499cf799ac7757d515efd512859e3b9744ac54a2e1"
+    },
+    {
+      "path": "src/detect.mjs",
+      "sha256": "ca101bbcc6beff2a79c2391f0c930cd6199ec68151a980c65c735b8abfe98609"
+    },
+    {
+      "path": "src/resource-policy.mjs",
+      "sha256": "ff7dd8bd8c76bbba9512cac0a0cf811b8d9f12e43e223464405d0c269dd5d1a8"
+    },
+    {
+      "path": "src/verify-login.mjs",
+      "sha256": "30c14808756937abb49bb0afb68c4862700c173739dfc6e64b2a54978f14cfb0"
+    }
+  ]
+}

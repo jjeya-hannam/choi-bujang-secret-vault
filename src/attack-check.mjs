@@ -75,6 +75,21 @@ export async function runAttackChecks(config) {
       attempts.push({ attackId: 'live_detection_revocation', expected: '심판의 가상 사건으로 복합 탐지·단일 기기 회수·시간 확인',
         observed: '미실행: 공개 연습 계약에는 네트워크·기기가 없음. 실제 회수 및 경과 시간은 심판에서 확인 필요' });
     }
+    if (config.step >= 10) {
+      const redundant = new Set(['local_owner_no_risk_source', 'local_other_subject', 'live_step_up_verification']);
+      for (let i = attempts.length - 1; i >= 0; i--) if (redundant.has(attempts[i].attackId)) attempts.splice(i, 1);
+      const { loadVerifiedSnapshot } = await import('../scripts/policy-recovery.mjs');
+      const snapshot = await loadVerifiedSnapshot();
+      attempts.push({ attackId: 'local_policy_snapshot', expected: '안전 정책 소스4개 및 SHA256 검증',
+        observed: `로컬 사본 검증: ${snapshot.version}, ${snapshot.files.length}개 파일 통과; 운영 정책 복구 아님` });
+      const { createRestoreHandler } = await import('./restore-api.mjs');
+      const res = { statusCode: 0, setHeader() {}, status(code) { this.statusCode = code; return this; }, json() { return this; } };
+      await createRestoreHandler(() => ({ verify: async () => null }))({ method: 'POST', url: '/api/restore', headers: {}, body: {} }, res);
+      attempts.push({ attackId: 'local_restore_anonymous', expected: '비인증 복구는 401',
+        observed: `실제 API 함수+가상 비인증 실행: HTTP ${res.statusCode}; 운영 HTTP 시험 아님` });
+      attempts.push({ attackId: 'live_restore', expected: '운영 심판 B 사전백업·변조/삭제 복구·재공격 차단',
+        observed: '미실행: 운영 DB SQL 복구 검증은 통과. 실제 HTTP 복구와 심판 결과는 배포 후 별도 확인' });
+    }
     return attempts;
   }
   if (config.step !== 1) throw new Error('이 단계의 공격 점검을 src/attack-check.mjs에 구현해 주세요.');

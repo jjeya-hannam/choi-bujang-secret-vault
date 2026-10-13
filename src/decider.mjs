@@ -26,6 +26,9 @@ function resourceRoute(method, path) {
       }
     }
   }
+  if (method === 'POST' && ['/restore', '/api/restore'].includes(path)) {
+    return { resourceId: RESOURCE_IDS.notes, route: `${method} ${path}`, id: 'restore' };
+  }
   // Existing public local fixture contract uses /notes/demo rather than the deployed UUID URL.
   if (method === 'GET' && path === '/notes/demo') {
     return { resourceId: RESOURCE_IDS.notes, route: 'GET /notes/:id', id: 'demo',
