@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { isIP } from 'node:net';
 import { createClient } from '@supabase/supabase-js';
 import { createRemoteJWKSet, decodeJwt, jwtVerify } from 'jose';
@@ -5,6 +6,20 @@ import { createRemoteJWKSet, decodeJwt, jwtVerify } from 'jose';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 const BEARER = /^Bearer ([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/u;
+
+// Judge a/b may share a signed sub in a test run; sub alone is not the note owner.
+// Bind the server-side owner UUID to the verified run AND the verified identity.
+// Students keep their existing Supabase auth uid unchanged.
+function judgeOwnerId(claims) {
+  const hex = createHash('sha256')
+    .update('aleph.stage8.judge-owner.v1\0')
+    .update(claims.aleph_run).update('\0')
+    .update(claims.sub).update('\0')
+    .update(claims.aleph_identity)
+    .digest('hex');
+  const variant = ((parseInt(hex[16], 16) & 3) | 8).toString(16);
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-${variant}${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+}
 
 function httpsUrl(value, path) {
   if (typeof value !== 'string' || value !== value.trim()) throw new TypeError('invalid_login_issuer');
@@ -80,7 +95,7 @@ export function createLoginVerifier({ config, supabaseSecretKey, judgeKeySet,
             || !['a', 'b'].includes(payload.aleph_identity)
             || !Number.isSafeInteger(payload.iat) || !Number.isSafeInteger(payload.exp)
             || payload.exp <= payload.iat || payload.exp - payload.iat > 900) return null;
-        return Object.freeze({ kind: 'judge', userId: payload.sub,
+        return Object.freeze({ kind: 'judge', userId: judgeOwnerId(payload),
           runId: payload.aleph_run, identity: payload.aleph_identity });
       } catch (error) {
         // Only fixed diagnostic codes leave this verifier; no token/claims/IDs.
