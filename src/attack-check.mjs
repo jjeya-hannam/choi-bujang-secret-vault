@@ -28,6 +28,20 @@ export async function runAttackChecks(config) {
           observed: `로컬 판정기 직접 실행: ${result.decision}/${result.reasonCode}; 운영 엔진 및 심판 판정 아님` });
       }
     }
+    if (config.step >= 7) {
+      const { normal, suspicious } = fixtureRequests();
+      for (const [attackId, request, expected] of [
+        ['local_normal_signals', normal, '로컬 가상 정상 사건 allow'],
+        ['local_composite_risk', suspicious, '로컬 가상 복합 사건 step_up/step_up_required'],
+        ['local_verified_risk', { ...suspicious, stepUp: { verified: true, authAgeSeconds: 60 } }, '로컬 가상 재확인 사건 allow'],
+      ]) {
+        const result = await decide(request);
+        attempts.push({ attackId, expected,
+          observed: `로컬 판정기 직접 실행: ${result.decision}/${result.reasonCode}; 실제 접속·재로그인·심판 판정 아님` });
+      }
+      attempts.push({ attackId: 'live_step_up_verification', expected: '실제 계약이 제공될 때 재로그인 확인 요청·응답 검증',
+        observed: '미실행: 현재 계약에 실제 재로그인 확인 호출이 없음. 가상 요청 시험만 실행함' });
+    }
     return attempts;
   }
   if (config.step !== 1) throw new Error('이 단계의 공격 점검을 src/attack-check.mjs에 구현해 주세요.');

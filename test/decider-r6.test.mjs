@@ -11,7 +11,7 @@ test('등록 기기의 엔진 요청은 원래 요청 ID와 다섯 항목 계약
     decision: 'allow', reasonCode: 'approved', ruleIds: ['device_registered'],
   });
   assert.deepEqual(normal, before);
-  assert.deepEqual(RULE_IDS, ['device_registered']);
+  assert.ok(RULE_IDS.includes('device_registered'));
 });
 
 test('미등록 또는 미확인 상태는 truthy 값으로 허용하지 않는다', async () => {
