@@ -20,9 +20,10 @@ for (const [name, identity, row, status, kind, judgeLabel] of [
     { note_id: id, owner_id: 'private fixture user', title: 'private title', content: 'private body' }, 200, 'judge', 'a'],
   ['소유자 거부', { kind: 'judge', identity: 'b', userId: 'private fixture user' }, null, 404, 'judge', 'b'],
   ['인증 거부', null, null, 401, 'none', undefined],
-  ['학생', { kind: 'student', identity: 'a', userId: 'private fixture user' }, null, 404, 'student', undefined],
-  ['알 수 없는 신원 종류', { kind: 'untrusted-kind', identity: 'a', userId: 'private fixture user' }, null, 404, 'none', undefined],
-  ['알 수 없는 심판 라벨', { kind: 'judge', identity: 'private fixture label', userId: 'private fixture user' }, null, 404, 'judge', undefined],
+  ['승인된 학생 소유자 거부', { kind: 'student', identity: 'a', userId: 'private fixture user', deviceRegistered: true }, null, 404, 'student', undefined],
+  ['미승인 학생 기기 거부', { kind: 'student', userId: 'private fixture user' }, null, 403, 'student', undefined],
+  ['알 수 없는 신원 종류', { kind: 'untrusted-kind', identity: 'a', userId: 'private fixture user' }, null, 401, 'none', undefined],
+  ['알 수 없는 심판 라벨', { kind: 'judge', identity: 'private fixture label', userId: 'private fixture user' }, null, 401, 'judge', undefined],
 ]) {
   test(`finish 진단 ${name}: 상태·검증 enum만 기록`, async () => {
     const entries = [];

@@ -4,7 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <title>BYTE BACK · 보호된 자료실</title>
+  <meta name="theme-color" content="#07101b">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/vault-192.png">
+  <link rel="apple-touch-icon" href="/icons/vault-192.png">
+  <title>최 부장 보관함</title>
   <style>
     :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#07101b;color:#ecf5ff}
     *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 80% -10%,#16415a 0,transparent 40%),#07101b}
@@ -23,20 +27,27 @@
     .row{display:flex;gap:9px;flex-wrap:wrap;margin-top:20px}.small{font-size:13px}.muted{color:#9db6c4}
     #message{min-height:24px;color:#b8ecdd;font-size:14px}#message.error{color:#ffd1be}
     .note{padding:18px 0;border-top:1px solid #2d4b5d}.note:first-child{border-top:0}.note h3{margin:0 0 7px;font-size:17px}.note p{white-space:pre-wrap;margin:0}
-    #workspace[hidden],#auth-panel[hidden]{display:none}footer{font-size:12px;color:#8ba6b5;padding-bottom:30px}
+    [hidden]{display:none!important}button:disabled{opacity:.5;cursor:default}.device-state{border-left:3px solid #85e8e3;padding-left:12px}.status-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}footer{font-size:12px;color:#8ba6b5;padding-bottom:30px}
     @media(max-width:720px){.grid{grid-template-columns:1fr}main{padding-block:42px}header{padding-block:18px}}
   </style>
 </head>
 <body>
-  <header><div class="brand">BYTE BACK / VAULT</div><div class="badge">ZERO TRUST LAB · 05</div></header>
+  <header><div class="brand">BYTE BACK / VAULT</div><div class="badge">보호된 자료실 · 기기 승인 필요</div></header>
   <main>
     <div class="eyebrow">Protected notes · Access controlled</div>
-    <h1>자료는 로그인 뒤에만 열립니다.</h1>
-    <p class="lead">학습용 가상 메모를 보관하는 자료실입니다. 서버가 로그인 토큰을 직접 확인하고, 메모는 검증된 계정별로 분리합니다.</p>
+    <h1>최 부장 보관함</h1>
+    <p class="lead">로그인하고 승인된 기기에서 내 가상 메모를 확인하세요. 설치한 앱에서도 같은 보호 규칙이 적용됩니다.</p>
+    <div class="status-row"><p id="connection" role="status">접속 상태 확인 중</p><button id="install" type="button" hidden>앱 설치</button></div>
+    <section class="panel" id="device-panel" aria-labelledby="device-heading" hidden>
+      <h2 id="device-heading">이 기기의 승인 상태</h2>
+      <p id="device-status" class="device-state" role="status">상태 확인 중</p>
+      <p class="small">앱 설치와 기기 승인은 별도입니다. 승인 전에는 메모를 요청하지 않습니다.</p>
+      <div class="row"><button id="request-device" type="button">기기 승인 요청</button><button id="check-device" type="button">승인 상태 확인</button><button id="logout" type="button">로그아웃</button></div>
+    </section>
     <div class="grid">
       <section class="panel" id="auth-panel" aria-labelledby="auth-heading">
         <h2 id="auth-heading">계정으로 들어가기</h2>
-        <p class="small">Supabase Auth 이메일·비밀번호 로그인. 비밀번호는 이 사이트의 서버에 저장하지 않습니다.</p>
+        <p class="small">이메일과 비밀번호로 로그인하세요. 공용 기기에서는 사용 후 로그아웃하세요.</p>
         <form id="auth-form">
           <label for="email">이메일</label><input id="email" type="email" autocomplete="email" required>
           <label for="password">비밀번호</label><input id="password" type="password" autocomplete="current-password" required>
@@ -46,7 +57,7 @@
       <section class="panel" id="workspace" hidden aria-labelledby="workspace-heading">
         <h2 id="workspace-heading">내 가상 메모</h2>
         <p class="small muted">현재 세션에서만 편집할 수 있습니다.</p>
-        <div class="row"><button id="logout" type="button">로그아웃</button><button id="refresh" type="button">목록 새로고침</button></div>
+        <div class="row"><button id="refresh" type="button">목록 새로고침</button></div>
         <form id="note-form">
           <label for="title">제목</label><input id="title" maxlength="160" required>
           <label for="body">내용</label><textarea id="body" maxlength="10000"></textarea>
@@ -55,7 +66,7 @@
       </section>
       <section class="panel" aria-labelledby="list-heading">
         <h2 id="list-heading">자료 목록</h2>
-        <p id="locked" class="small">잠김 · 로그인 전에는 자료를 요청하지 않습니다.</p>
+        <p id="locked" class="small">잠김 · 로그인과 기기 승인 확인 전에는 자료를 요청하지 않습니다.</p>
         <div id="notes" aria-live="polite"></div>
       </section>
     </div>
@@ -63,70 +74,137 @@
   </main>
   <footer>학습용 가상 자료만 사용합니다 · 개인 정보와 서버 비밀 키는 공개 파일에 넣지 않습니다. <a href="/bonus.html" style="color:#8fe6e1">보너스 XDR 실습 결과</a></footer>
   <script type="module">
-    const $ = (id) => document.getElementById(id);
-    let session = null;
+    const $ = id => document.getElementById(id);
+    const DEVICE_STATES = new Set(['unrequested','pending','approved','revoked']);
+    let authStatus = { signedIn:false, deviceStatus:'unrequested' };
+    let checking = true;
+    let generation = 0;
     let editing = null;
     let currentNotes = [];
-    function message(value, error=false) { $('message').textContent = value; $('message').className = error ? 'error' : ''; }
+    let installPrompt = null;
+    // Remove the previous browser-stored session once. New sessions use server cookies.
+    try { sessionStorage.removeItem('vault_session'); } catch {}
+    function message(value, error=false) { $('message').textContent=value; $('message').className=error?'error':''; }
+    function clearNotes() {
+      currentNotes=[]; editing=null; $('note-form').reset(); $('save').textContent='메모 추가'; $('cancel').hidden=true; $('notes').replaceChildren();
+    }
+    function canRead() { return navigator.onLine && !checking && authStatus.signedIn && authStatus.deviceStatus==='approved'; }
+    function applyStatus(data) {
+      authStatus={signedIn:data.signedIn===true,deviceStatus:DEVICE_STATES.has(data.deviceStatus)?data.deviceStatus:'unrequested'};
+      if (!authStatus.signedIn || authStatus.deviceStatus!=='approved') clearNotes();
+    }
     async function authRequest(action, fields={}) {
-      const response = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action,...fields}), cache:'no-store' });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || '인증 요청이 거부됐습니다.');
+      if (!navigator.onLine) throw new Error('오프라인입니다. 연결 후 다시 시도하세요.');
+      const options={credentials:'same-origin',cache:'no-store'};
+      if (action) Object.assign(options,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...fields})});
+      const response=await fetch('/api/auth',options);
+      const data=await response.json().catch(()=>({}));
+      if (!response.ok) throw new Error(data.error||'로그인 상태를 확인하지 못했습니다.');
       return data;
     }
-    function saveSession(next) {
-      session = next && typeof next.access_token === 'string' ? next : null;
-      if (session) sessionStorage.setItem('vault_session', JSON.stringify(session));
-      else sessionStorage.removeItem('vault_session');
-    }
-    async function restoreSession() {
-      let saved;
-      try { saved = JSON.parse(sessionStorage.getItem('vault_session') || 'null'); } catch { saved = null; }
-      if (!saved?.refresh_token) { saveSession(null); return; }
-      try { const data=await authRequest('refresh',{refreshToken:saved.refresh_token}); saveSession(data.session); }
-      catch { saveSession(null); }
-    }
-    async function request(path, options={}) {
-      if (session?.refresh_token && session.expires_at && session.expires_at <= Math.floor(Date.now()/1000)+60) {
-        try { const data=await authRequest('refresh',{refreshToken:session.refresh_token}); saveSession(data.session); }
-        catch { saveSession(null); render(); throw new Error('세션이 만료됐습니다. 다시 로그인하세요.'); }
+    async function request(path,options={}) {
+      if (!canRead()) throw new Error('로그인과 기기 승인 확인이 필요합니다.');
+      const started=generation;
+      let response;
+      try { response=await fetch(path,{...options,credentials:'same-origin',headers:{'Content-Type':'application/json',...(options.headers||{})},cache:'no-store'}); }
+      catch { if(started===generation){generation++;checking=true;clearNotes();render();}throw new Error('서버 연결을 확인하지 못했습니다. 연결 후 승인 상태를 다시 확인하세요.'); }
+      if (started!==generation || !canRead()) throw new Error('접속 상태가 변경됐습니다. 다시 확인하세요.');
+      if (response.status===401 || response.status===403) {
+        generation++; checking=true; clearNotes(); render();
+        await checkStatus(false);
+        throw new Error('로그인 또는 기기 승인이 필요합니다.');
       }
-      const token = session?.access_token;
-      if (!token) throw new Error('로그인이 필요합니다.');
-      const response = await fetch(path, { ...options, headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...(options.headers || {}) }, cache:'no-store' });
-      if (response.status === 204) return null;
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || '서버 요청이 거부됐습니다.');
+      if (response.status===204) return null;
+      const data=await response.json().catch(()=>({}));
+      if (started!==generation || !canRead()) throw new Error('접속 상태가 변경됐습니다. 다시 확인하세요.');
+      if (!response.ok) throw new Error(data.error||'서버 요청이 거부됐습니다.');
       return data;
     }
     function render() {
-      $('auth-panel').hidden = !!session;
-      $('workspace').hidden = !session;
-      $('locked').hidden = !!session;
+      const ready=canRead();
+      $('connection').textContent=navigator.onLine?'온라인 · 서버에서 승인 상태를 확인합니다.':'오프라인 · 보호된 메모는 표시하거나 저장하지 않습니다.';
+      $('auth-panel').hidden=authStatus.signedIn;
+      $('device-panel').hidden=!authStatus.signedIn;
+      $('workspace').hidden=!ready;
+      $('locked').hidden=ready;
+      $('locked').textContent=!navigator.onLine?'오프라인 · 연결 후 로그인과 기기 승인을 다시 확인하세요.':checking?'확인 중 · 보호된 자료는 잠겨 있습니다.':'잠김 · 로그인과 기기 승인 확인 전에는 자료를 요청하지 않습니다.';
+      const labels={unrequested:'미요청 · 이 기기의 승인 요청을 보내세요.',pending:'승인 대기 · 승인 담당자의 확인이 필요합니다.',approved:'승인됨 · 서버 확인을 통과했습니다.',revoked:'승인 회수됨 · 이 기기에서는 메모를 열 수 없습니다.'};
+      $('device-status').textContent=!navigator.onLine?'오프라인 · 현재 승인 상태를 확인할 수 없습니다.':checking?'승인 상태 확인 중':labels[authStatus.deviceStatus];
+      $('request-device').disabled=!navigator.onLine||checking||authStatus.deviceStatus!=='unrequested';
+      $('check-device').disabled=!navigator.onLine||checking;
+      $('auth-form').querySelectorAll('button').forEach(button=>button.disabled=!navigator.onLine||checking);
       $('notes').replaceChildren();
-      if (!session) return;
-      if (!currentNotes.length) { const p=document.createElement('p'); p.textContent='아직 내 메모가 없습니다.'; $('notes').append(p); return; }
+      if (!ready) return;
+      if (!currentNotes.length) { const p=document.createElement('p');p.textContent='아직 내 메모가 없습니다.';$('notes').append(p);return; }
       for (const note of currentNotes) {
-        const article=document.createElement('article'); article.className='note';
-        const h=document.createElement('h3'); h.textContent=note.title;
-        const p=document.createElement('p'); p.textContent=note.body;
-        const controls=document.createElement('div'); controls.className='row';
-        const edit=document.createElement('button'); edit.type='button'; edit.textContent='수정'; edit.onclick=()=>{ editing=note.id; $('title').value=note.title; $('body').value=note.body; $('save').textContent='수정 저장'; $('cancel').hidden=false; $('title').focus(); };
-        const remove=document.createElement('button'); remove.type='button'; remove.textContent='삭제'; remove.onclick=async()=>{ if (!confirm('이 가상 메모를 삭제할까요?')) return; try { await request('/api/notes/'+encodeURIComponent(note.id),{method:'DELETE'}); await loadNotes(); message('메모를 삭제했습니다.'); } catch(e){message(e.message,true);} };
-        controls.append(edit,remove); article.append(h,p,controls); $('notes').append(article);
+        const article=document.createElement('article');article.className='note';
+        const h=document.createElement('h3');h.textContent=note.title;
+        const p=document.createElement('p');p.textContent=note.body;
+        const controls=document.createElement('div');controls.className='row';
+        const edit=document.createElement('button');edit.type='button';edit.textContent='수정';
+        edit.onclick=()=>{if(!canRead())return;editing=note.id;$('title').value=note.title;$('body').value=note.body;$('save').textContent='수정 저장';$('cancel').hidden=false;$('title').focus();};
+        const remove=document.createElement('button');remove.type='button';remove.textContent='삭제';
+        remove.onclick=async()=>{if(!canRead()||!confirm('이 가상 메모를 삭제할까요?'))return;try{await request('/api/notes/'+encodeURIComponent(note.id),{method:'DELETE'});await loadNotes();message('메모를 삭제했습니다.');}catch(e){message(e.message,true);}};
+        controls.append(edit,remove);article.append(h,p,controls);$('notes').append(article);
       }
     }
     async function loadNotes() {
-      if (!session) { currentNotes=[]; render(); return; }
-      const data=await request('/api/notes'); currentNotes=data.notes; render();
+      if (!canRead()) { clearNotes();render();return; }
+      const started=generation;
+      const data=await request('/api/notes');
+      if(started!==generation||!canRead())return;
+      currentNotes=Array.isArray(data.notes)?data.notes:[];render();
     }
-    $('auth-form').addEventListener('submit',async(e)=>{e.preventDefault();try{const data=await authRequest('signIn',{email:$('email').value.trim(),password:$('password').value});saveSession(data.session);$('password').value='';message('로그인했습니다.');await loadNotes();}catch(err){message(err.message,true);}});
-    $('signup').addEventListener('click',async()=>{try{const data=await authRequest('signUp',{email:$('email').value.trim(),password:$('password').value});saveSession(data.session);message(data.session?'계정이 만들어졌습니다.':'계정 확인 메일을 보냈습니다. 메일 확인 뒤 로그인하세요.');$('password').value='';if(session) await loadNotes();}catch(err){message(err.message,true);}});
-    $('logout').addEventListener('click',()=>{saveSession(null);currentNotes=[];editing=null;render();message('로그아웃했습니다.');});
-    $('refresh').addEventListener('click',()=>loadNotes().catch(err=>message(err.message,true)));
+    async function checkStatus(load=true) {
+      const started=++generation;checking=true;clearNotes();render();
+      if(!navigator.onLine){checking=false;render();return;}
+      try {
+        const data=await authRequest();if(started!==generation)return;
+        applyStatus(data);checking=false;render();if(load&&canRead())await loadNotes();
+      } catch(error) {
+        if(started!==generation)return;authStatus={signedIn:false,deviceStatus:'unrequested'};checking=false;clearNotes();render();message(error.message,true);
+      }
+    }
+    async function authenticate(action) {
+      const started=++generation;checking=true;clearNotes();render();
+      try {
+        const data=await authRequest(action,{email:$('email').value.trim(),password:$('password').value});
+        if(started!==generation)return;applyStatus(data);checking=false;render();
+        message(authStatus.signedIn?'로그인했습니다. 기기 승인 상태를 확인하세요.':'계정 확인 메일을 보냈습니다. 확인 뒤 로그인하세요.');
+        if(canRead())await loadNotes();
+      } catch(error) {if(started===generation){checking=false;render();message(error.message,true);}}
+      finally {$('password').value='';}
+    }
+    $('auth-form').addEventListener('submit',event=>{event.preventDefault();authenticate('signIn');});
+    $('signup').addEventListener('click',()=>authenticate('signUp'));
+    $('logout').addEventListener('click',async()=>{
+      const started=++generation;checking=true;clearNotes();authStatus={signedIn:false,deviceStatus:'unrequested'};render();
+      try {await authRequest('signOut');message('로그아웃했습니다.');}catch(error){message('서버 로그아웃을 확인하지 못했습니다. 연결 후 다시 로그인 상태를 확인하세요.',true);}
+      if(started===generation){checking=false;render();}
+    });
+    $('request-device').addEventListener('click',async()=>{
+      if(checking||authStatus.deviceStatus!=='unrequested')return;
+      const started=++generation;checking=true;clearNotes();render();
+      try {const data=await authRequest('requestDevice');if(started!==generation)return;applyStatus(data);checking=false;render();message('승인 요청을 보냈습니다. 담당자의 확인을 기다리세요.');}
+      catch(error){if(started===generation){checking=false;render();message(error.message,true);}}
+    });
+    $('check-device').addEventListener('click',()=>checkStatus());
+    $('refresh').addEventListener('click',()=>checkStatus());
     $('cancel').addEventListener('click',()=>{editing=null;$('note-form').reset();$('save').textContent='메모 추가';$('cancel').hidden=true;});
-    $('note-form').addEventListener('submit',async(e)=>{e.preventDefault();const payload={title:$('title').value.trim(),body:$('body').value};try{await request(editing?'/api/notes/'+encodeURIComponent(editing):'/api/notes',{method:editing?'PUT':'POST',body:JSON.stringify(payload)});editing=null;$('note-form').reset();$('save').textContent='메모 추가';$('cancel').hidden=true;await loadNotes();message('메모를 저장했습니다.');}catch(err){message(err.message,true);}});
-    await restoreSession();await loadNotes().catch(err=>message(err.message,true));
+    $('note-form').addEventListener('submit',async event=>{
+      event.preventDefault();const payload={title:$('title').value.trim(),body:$('body').value};
+      try {await request(editing?'/api/notes/'+encodeURIComponent(editing):'/api/notes',{method:editing?'PUT':'POST',body:JSON.stringify(payload)});editing=null;$('note-form').reset();$('save').textContent='메모 추가';$('cancel').hidden=true;await loadNotes();message('메모를 저장했습니다.');}
+      catch(error){message(error.message,true);}
+    });
+    window.addEventListener('offline',()=>{generation++;checking=false;clearNotes();render();message('연결이 끊겼습니다. 보호된 메모를 닫았습니다.');});
+    window.addEventListener('online',()=>checkStatus());
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){generation++;checking=true;clearNotes();render();}else checkStatus();});
+    window.addEventListener('pageshow',event=>{if(event.persisted)checkStatus();});
+    window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();installPrompt=event;$('install').hidden=false;});
+    $('install').addEventListener('click',async()=>{if(!installPrompt)return;const prompt=installPrompt;installPrompt=null;$('install').hidden=true;await prompt.prompt();await prompt.userChoice;});
+    window.addEventListener('appinstalled',()=>{installPrompt=null;$('install').hidden=true;message('앱을 설치했습니다. 기기 승인은 별도로 확인하세요.');});
+    if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+    render();await checkStatus();
   </script>
 </body>
 </html>

@@ -95,7 +95,7 @@ test('엔진 입장 후 API에서 A 자기 메모만 읽기·수정하고 B의 A
   for (const prefix of ['/notes', '/api/notes']) {
     const db = database();
     let userId = 'student_a';
-    const handler = createNotesHandler(() => ({ db, verify: async () => ({ kind: 'student', userId }) }));
+    const handler = createNotesHandler(() => ({ db, verify: async () => ({ kind: 'student', deviceRegistered: true, userId }) }));
     for (const [subjectId, verifiedUser, expectedStatus] of [
       ['engine_pseudonym_a', 'student_a', 200], ['engine_pseudonym_b', 'student_b', 404],
     ]) {
@@ -120,7 +120,7 @@ test('엔진 입장 후 API에서 A 자기 메모만 읽기·수정하고 B의 A
 test('API에서 A의 자기 메모 읽기/수정은 허용하고 B의 A 메모 읽기/수정은 거부한다', async () => {
   const db = database();
   let current = 'student_a';
-  const handler = createNotesHandler(() => ({ db, verify: async () => ({ kind: 'student', userId: current }) }));
+  const handler = createNotesHandler(() => ({ db, verify: async () => ({ kind: 'student', deviceRegistered: true, userId: current }) }));
   for (const method of ['GET', 'PUT']) {
     const res = response();
     await handler({ url: `/api/notes/${noteId}`, method, headers: {}, body: { title: 'updated', body: 'fixture', owner_id: 'student_b', role: 'instructor' } }, res, noteId);
@@ -137,7 +137,7 @@ test('API에서 A의 자기 메모 읽기/수정은 허용하고 B의 A 메모 �
 });
 
 test('API에서 body role 공지 수정·쿼리 기능·export 별칭을 거부한다', async () => {
-  const getServices = () => ({ db: database(), verify: async () => ({ kind: 'student', userId: 'student_a' }) });
+  const getServices = () => ({ db: database(), verify: async () => ({ kind: 'student', deviceRegistered: true, userId: 'student_a' }) });
   const announcement = createAnnouncementHandler(getServices);
   const res = response();
   await announcement({ url: `/api/announcements/${noteId}`, method: 'PUT', headers: { 'x-role': 'instructor' }, body: { role: 'instructor' } }, res);
@@ -159,7 +159,7 @@ test('DB가 잘못된 소유자나 ID의 행을 돌려줘도 단건을 내보내
   ]) {
     const db = { from() { return { select() { return this; }, eq() { return this; }, update() { return this; },
       async maybeSingle() { return { data: {...row, title:'fixture', content:'fixture'}, error:null }; } }; } };
-    const handler = createNotesHandler(() => ({ db, verify: async () => ({userId:'student_a'}) }));
+    const handler = createNotesHandler(() => ({ db, verify: async () => ({kind:'student',deviceRegistered:true,userId:'student_a'}) }));
     for (const method of ['GET','PUT']) {
       const res = response();
       await handler({url:`/api/notes/${noteId}`, method, headers:{}, body:{title:'fixture',body:'fixture'}},res,noteId);
@@ -176,7 +176,7 @@ test('목록은 반환 소유자를 재검사하고 응답에서 소유자를 �
     {note_id:noteId,title:'missing',content:'missing'},
   ];
   const db = {from(){return {select(){return this;},eq(){return this;},async order(){return {data:rows,error:null};}};}};
-  const handler=createNotesHandler(()=>({db,verify:async()=>({userId:'student_a'})}));
+  const handler=createNotesHandler(()=>({db,verify:async()=>({kind:'student',deviceRegistered:true,userId:'student_a'})}));
   const res=response(); await handler({url:'/api/notes',method:'GET',headers:{}},res);
   assert.equal(res.statusCode,200); assert.equal(res.data.notes.length,1);
   assert.deepEqual(Object.keys(res.data.notes[0]).sort(),['body','id','title']);
@@ -185,7 +185,7 @@ test('목록은 반환 소유자를 재검사하고 응답에서 소유자를 �
 test('대문자 UUID 요청도 저장된 소문자 UUID와 같은 자료로 대조한다', async () => {
   const canonical = 'abcdefab-abcd-4abc-8abc-abcdefabcdef';
   const db={from(){return {select(){return this;},eq(){return this;},async maybeSingle(){return {data:{note_id:canonical,owner_id:'student_a',title:'fixture',content:'fixture'},error:null};}};}};
-  const handler=createNotesHandler(()=>({db,verify:async()=>({userId:'student_a'})}));
+  const handler=createNotesHandler(()=>({db,verify:async()=>({kind:'student',deviceRegistered:true,userId:'student_a'})}));
   const res=response(); await handler({url:`/api/notes/${canonical.toUpperCase()}`,method:'GET',headers:{}},res,canonical.toUpperCase());
   assert.equal(res.statusCode,200); assert.equal(res.data.id,canonical);
 });

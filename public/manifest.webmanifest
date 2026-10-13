@@ -1,0 +1,16 @@
+{
+  "id": "/",
+  "name": "최 부장 보관함",
+  "short_name": "보관함",
+  "description": "로그인과 기기 승인을 확인하는 가상 메모 자료실",
+  "lang": "ko",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#07101b",
+  "theme_color": "#07101b",
+  "icons": [
+    { "src": "/icons/vault-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/vault-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

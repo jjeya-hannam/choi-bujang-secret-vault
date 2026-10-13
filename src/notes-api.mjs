@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import config from '../aleph.config.json' with { type: 'json' };
 import { createLoginVerifier } from './verify-login.mjs';
+import { createRequestLoginVerifier } from './browser-session.mjs';
 import { resourceRoute, RESOURCE_IDS, UUID_PATTERN } from './resource-policy.mjs';
 
 const UUID = UUID_PATTERN;
@@ -12,13 +13,14 @@ export function getNotesServices() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SECRET_KEY;
   if (!url || !key) throw new Error('server_configuration_missing');
-  cached = {
-    db: createClient(url, key, {
+  const db = createClient(url, key, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-    }),
-    verify: createLoginVerifier({ config, supabaseSecretKey: key,
+    });
+  const verifyBearer = createLoginVerifier({ config, supabaseSecretKey: key,
       deploymentHostname: process.env.VERCEL_URL,
-      onReject: code => console.warn('notes authorization rejected', code) }),
+      onReject: code => console.warn('notes authorization rejected', code) });
+  cached = {
+    db, verify: createRequestLoginVerifier({ verifyBearer, db, config, deploymentHostname: process.env.VERCEL_URL }),
   };
   return cached;
 }
@@ -75,9 +77,11 @@ return async function handleNotes(req, res, rawId) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   try {
     const { db, verify } = getServices();
-    const identity = await verify(req.headers.authorization);
+    const identity = await verify(req.headers.authorization, req);
     recordIdentity(identity);
-    if (!identity) return json(res, 401, 'AUTH_REQUIRED');
+    if (!identity || !['student', 'judge'].includes(identity.kind)
+        || (identity.kind === 'judge' && !['a', 'b'].includes(identity.identity))) return json(res, 401, 'AUTH_REQUIRED');
+    if (identity.kind === 'student' && identity.deviceRegistered !== true) return json(res, 403, 'DEVICE_NOT_REGISTERED');
 
     const url = new URL(req.url, 'https://api.invalid');
     const resource = resourceRoute(req.method, url.pathname);
@@ -165,9 +169,11 @@ export function createAnnouncementHandler(getServices = getNotesServices, logDia
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     try {
       const { verify } = getServices();
-      const identity = await verify(req.headers.authorization);
+      const identity = await verify(req.headers.authorization, req);
       recordIdentity(identity);
-      if (!identity) return json(res, 401, 'AUTH_REQUIRED');
+      if (!identity || !['student', 'judge'].includes(identity.kind)
+          || (identity.kind === 'judge' && !['a', 'b'].includes(identity.identity))) return json(res, 401, 'AUTH_REQUIRED');
+      if (identity.kind === 'student' && identity.deviceRegistered !== true) return json(res, 403, 'DEVICE_NOT_REGISTERED');
       const url = new URL(req.url, 'https://api.invalid');
       const resource = resourceRoute(req.method, url.pathname);
       if (url.search || !resource || resource.resourceId !== RESOURCE_IDS.announcements) return json(res, 403, 'RESOURCE_FORBIDDEN');

@@ -81,3 +81,17 @@ API 응답 진단은 종료 시 고정 메서드·자원 종류·HTTP 상태·�
 운영 적용 순서: DB SQL 검토·승인 후 적용 → 기존 행·권한 검증 → 코드 저장점·배포 → 신규 심판 B 메모 생성/변조/삭제 복구 시험 → 기존 1~9 보호 재시험. 사용자의 명시적 승인 후 운영 DB SQL을 적용했습니다. 운영 DB에서도 변조/삭제 복구·타인/다른 실행/해시변조/불변백업/원자실패/기존행보존 assertions를 통과했습니다. 시험 transaction은 ROLLBACK했고 기존 메모 4건과 owner NULL 상태를 유지했습니다. 익명·학생의 복구 RPC 호출 권한은 없습니다. 실제 심판에서 평가 커밋 `8d71e3896ce6`의 10단계 100/100(조건 5개·완결성 가점 3개)을 확인했습니다. B 메모 변조 복구·삭제 복구·복구 뒤 1~9단계 대표 공격이 모두 격파됐습니다. 로컬 PostgreSQL에서 변조/삭제 복구·타인/다른 실행/해시변조/불변백업/원자실패/기존행보존 assertions를 모두 통과했습니다.
 
 로컬 재시험: `node --test test/restore-r10.test.mjs test/policy-recovery-r10.test.mjs`, `npm run detect:test`, `npm run decider:test`. 이전 보호 확인은 `node --test test/r5.test.mjs test/decider-r6.test.mjs test/decider-r7.test.mjs test/resource-r8.test.mjs test/login-binding-r8.test.mjs test/api-diagnostics-r8.test.mjs test/auth-boundary-r8.test.mjs test/detect-r9.test.mjs`입니다. 운영 계정의 별도 전체 HTTP 회귀는 미실행이며, 복구 후 1~9단계 대표 공격은 실제 10단계 심판에서 통과했습니다.
+
+## 11단계 저장점
+
+10단계 점수100/100 기록 커밋 `854afe9`에서 이어갑니다. 앱 이름은 「최 부장 보관함」이며 `/manifest.webmanifest`, 192/512px 아이콘, 공개 오프라인 안내를 제공합니다. 설치 표시와 서버 승인 상태를 따로 표시하고 별도 접속 프로그램을 설치하지 않습니다. 서비스워커는 공개 오프라인 안내와 아이콘만 캐시하며 자료/API/토큰은 캐시하지 않습니다.
+
+브라우저의 Supabase access/refresh token 응답과 sessionStorage 보관을 제거했습니다. 로그인은 서버에서 검증하고 1시간 이하의 접속 세션을 생성합니다. 브라우저에는 Secure·HttpOnly·SameSite=Strict·Path=/ __Host 쿠키의 무작위 접속 식별자만 남으며 JavaScript는 이를 읽지 못합니다. 서버 DB에는 그 SHA256만 저장합니다. 이 식별자는 복제 가능한 접속 credential이며 하드웨어 키나 물리 기기 증명으로 주장하지 않습니다. 토큰·개인키를 Web Storage/IndexedDB/Cache Storage에 넣지 않습니다. 기존 sessionStorage 값은 읽지 않고 삭제합니다.
+
+로그인한 새 브라우저는 승인 대기이며 요청 버튼은 승인 상태를 바꾸지 않습니다. GET `/api/auth` 또는 `/api/device`는 signedIn/deviceStatus만 반환합니다. 서버의 private registry에서 approved일 때만 자료 API가 열립니다. pending/revoked 학생과 학생 Bearer만으로는 자료를 읽거나 바꿀 수 없습니다. 승인 전·오프라인·회수·로그아웃·상태 실패·화면 숨김 때 메모와 편집 내용을 비우고 늦은 응답도 표시하지 않습니다. 돌아오거나 새로고침할 때 서버 상태를 다시 확인합니다.
+
+기기 승인 담당자는 신원을 별도로 확인한 뒤 운영 SQL 콘솔에서 `public.stage11_approve_browser_device(확인한 사용자 UUID, 검토한 기기 UUID)`를 호출합니다. 공개 승인 HTTP endpoint는 없습니다. 서비스 role만 호출 가능하며 웹 승인 요청으로 자가승인할 수 없습니다. 실제 사람의 기기를 자동 승인하지 않았습니다. 회수는 담당자가 private registry의 해당 기기 status를 revoked로 바꾸면 모든 연결 세션의 다음 요청에서 적용됩니다. 계정 정지는 registry 회수도 함께 해야 즉시 반영됩니다. 공식 운영 엔진의 deviceRegistered·경로/본문 서명 검증과 이 자료실의 브라우저 승인 registry는 별도 경계입니다. 기존 decide18필드·응답5필드는 그대로이며 클라이언트 헤더로 승인이나 서명을 만들지 않습니다. 서명 확인된 심판 A/B의 기존 시험 요청은 유지합니다.
+
+`supabase/stage11.sql` 운영 적용 및 가상 transaction 시험이 완료됐습니다. 신규 승인대기, 운영자 승인, 만료/회수, 다른 사용자 승인 상속 금지, 공개 RPC 권한 없음 assertions 통과 후 ROLLBACK했습니다. 기존 소유자미지정 메모4건은 보존했고 실제 브라우저 device/session 행은0개입니다. 로컬 브라우저와 가상 서버에서 승인전 메모 요청없음/승인후 표시를 확인했습니다. 실제 학생 계정 승인과 로그인 HTTP는 미실행이며 실제 심판11점수는 배포/제출 후 확인합니다.
+
+검증: `node --test test/session-device-r11.test.mjs`와 기존 5~10 관련 회귀 검사 총68개 통과. 기존 전체 테스트의 package-starter 기준 API목록 및 xdr-run 임시fixture 두 실패는 별도 기존 이슈입니다. `npm run decider:test`, `npm run detect:test`, `npm run bundle`으로 가상 판정·탐지·실제 익명HTTP 자기점검을 재실행합니다. 설치는 브라우저의 설치 메뉴를 사용하며 승인 요청은 화면의 「기기 승인 요청」, 결과는 「승인 상태 확인」으로 확인합니다. 서버가 승인한 브라우저의 기존 메모 조회·생성·수정·삭제는 동일합니다.

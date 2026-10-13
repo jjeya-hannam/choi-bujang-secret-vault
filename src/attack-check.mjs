@@ -90,6 +90,19 @@ export async function runAttackChecks(config) {
       attempts.push({ attackId: 'live_restore', expected: '운영 심판 B 사전백업·변조/삭제 복구·재공격 차단',
         observed: '미실행: 운영 DB SQL 복구 검증은 통과. 실제 HTTP 복구와 심판 결과는 배포 후 별도 확인' });
     }
+    if (config.step >= 11) {
+      const redundant = new Set(['local_registered_device', 'local_unconfirmed_device', 'local_restore_anonymous']);
+      for (let i = attempts.length - 1; i >= 0; i--) if (redundant.has(attempts[i].attackId)) attempts.splice(i, 1);
+      const manifestResponse = await fetch(new URL('/manifest.webmanifest', base), { cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(10000) });
+      let installable = false;
+      try { const manifest = await manifestResponse.json(); installable = manifest.display === 'standalone' && typeof manifest.name === 'string' && Array.isArray(manifest.icons) && manifest.icons.length >= 2; } catch { /* fail recorded below */ }
+      attempts.push({ attackId: 'live_pwa_manifest', expected: '공개 설치형 manifest와 앱 이름·아이콘', observed: `실제 HTTP ${manifestResponse.status}, manifest ${installable ? '확인' : '확인 실패'}` });
+      const statusResponse = await fetch(new URL('/api/auth', base), { cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(10000) });
+      let signedOut = false;
+      try { const status = await statusResponse.json(); signedOut = status.signedIn === false && status.deviceStatus === 'unrequested'; } catch { /* fail recorded below */ }
+      attempts.push({ attackId: 'live_unsigned_device_status', expected: '익명은 미로그인·미승인 상태', observed: `실제 HTTP ${statusResponse.status}, 비승인 상태 ${signedOut ? '확인' : '확인 실패'}` });
+      attempts.push({ attackId: 'live_approved_student_browser', expected: '실제 승인전 보호자료 차단·승인후 본인자료 허용', observed: '실제 학생 계정 HTTP는 미실행. 로컬 API/브라우저 가상시험과 운영DB rollback 시험으로 대기/승인/회수 확인' });
+    }
     return attempts;
   }
   if (config.step !== 1) throw new Error('이 단계의 공격 점검을 src/attack-check.mjs에 구현해 주세요.');

@@ -11,7 +11,7 @@ export function createRestoreHandler(getServices = getNotesServices) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     try {
       const { db, verify } = getServices();
-      const identity = await verify(req.headers?.authorization);
+      const identity = await verify(req.headers?.authorization, req);
       if (!identity) return reject(res, 401, 'AUTH_REQUIRED');
       if (identity.kind !== 'judge' || identity.identity !== 'b'
           || !UUID_PATTERN.test(identity.userId ?? '') || !UUID_PATTERN.test(identity.runId ?? '')) {

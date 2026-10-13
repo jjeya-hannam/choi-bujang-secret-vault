@@ -95,7 +95,7 @@ test('restore exposes only fixed failure codes and requires an exact successful 
 
 test('student POST keeps original insertion path and student restore is denied', async () => {
   const owner = randomUUID(), id = randomUUID(), inserted = [];
-  const services = () => ({ verify: async () => ({ kind: 'student', userId: owner }), db: {
+  const services = () => ({ verify: async () => ({ kind: 'student', userId: owner, deviceRegistered: true }), db: {
     rpc() { throw new Error('student_must_not_call_recovery_rpc'); },
     from() { return { async insert(row) { inserted.push(row); return { error: null }; } }; },
   } });
