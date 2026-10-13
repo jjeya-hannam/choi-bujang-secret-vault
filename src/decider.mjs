@@ -24,7 +24,7 @@ function resourceRoute(method, path, { fixture = false } = {}) {
 
 // ALEPH SDP 엔진이 신원·기기·경로를 확인한 계약 요청만 받습니다.
 // 브라우저 헤더나 출처 없는 신호를 신뢰 상태로 승격하지 않습니다.
-export const RULE_IDS = Object.freeze(['device_registered', 'step_up_required', 'resource_route']);
+export const RULE_IDS = Object.freeze(['device_registered', 'step_up_required', 'resource_scope']);
 
 export async function decide(request) {
   let decision = 'allow';
@@ -42,7 +42,7 @@ export async function decide(request) {
       || (resource.resourceId === RESOURCE_IDS.announcements && request.method !== 'GET')) {
     decision = 'deny';
     reasonCode = 'policy_denied';
-    ruleIds = ['device_registered', 'resource_route'];
+    ruleIds = ['device_registered', 'resource_scope'];
   } else {
     const signals = request.signals;
     // 현재 실제 계약의 source=none/unknown은 정상 위치·네트워크 증거가 아닙니다.

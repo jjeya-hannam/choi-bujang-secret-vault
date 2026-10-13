@@ -77,3 +77,34 @@ test('API에서 body role 공지 수정·쿼리 기능·export 별칭을 거부�
     assert.equal(denied.statusCode, 403);
   }
 });
+
+test('DB가 잘못된 소유자나 ID의 행을 돌려줘도 단건을 내보내지 않는다', async () => {
+  for (const row of [
+    { note_id: noteId, owner_id: 'student_b' },
+    { note_id: noteId },
+    { note_id: '22222222-2222-4222-8222-222222222222', owner_id: 'student_a' },
+  ]) {
+    const db = { from() { return { select() { return this; }, eq() { return this; }, update() { return this; },
+      async maybeSingle() { return { data: {...row, title:'fixture', content:'fixture'}, error:null }; } }; } };
+    const handler = createNotesHandler(() => ({ db, verify: async () => ({userId:'student_a'}) }));
+    for (const method of ['GET','PUT']) {
+      const res = response();
+      await handler({url:`/api/notes/${noteId}`, method, headers:{}, body:{title:'fixture',body:'fixture'}},res,noteId);
+      assert.equal(res.statusCode,404);
+      assert.equal(res.data.error,'NOTE_NOT_FOUND');
+    }
+  }
+});
+
+test('목록은 반환 소유자를 재검사하고 응답에서 소유자를 제외한다', async () => {
+  const rows = [
+    {note_id:noteId,owner_id:'student_a',title:'fixture',content:'fixture'},
+    {note_id:noteId,owner_id:'student_b',title:'other',content:'other'},
+    {note_id:noteId,title:'missing',content:'missing'},
+  ];
+  const db = {from(){return {select(){return this;},eq(){return this;},async order(){return {data:rows,error:null};}};}};
+  const handler=createNotesHandler(()=>({db,verify:async()=>({userId:'student_a'})}));
+  const res=response(); await handler({url:'/api/notes',method:'GET',headers:{}},res);
+  assert.equal(res.statusCode,200); assert.equal(res.data.notes.length,1);
+  assert.deepEqual(Object.keys(res.data.notes[0]).sort(),['body','id','title']);
+});

@@ -14,7 +14,7 @@ test('정상 allow, 복합 가상 사건 step_up 및 계약 보존', async () =>
   assert.equal(result.reasonCode, 'step_up_required');
   assert.deepEqual(result.ruleIds, ['device_registered', 'step_up_required']);
   assert.deepEqual(suspicious, original);
-  assert.deepEqual(RULE_IDS, ['device_registered', 'step_up_required', 'resource_route']);
+  assert.deepEqual(RULE_IDS, ['device_registered', 'step_up_required', 'resource_scope']);
 });
 
 test('지역 단독 또는 복합 조건 하나가 빠진 사건은 영구 차단하지 않는다', async () => {

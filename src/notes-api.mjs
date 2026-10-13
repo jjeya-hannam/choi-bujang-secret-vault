@@ -54,10 +54,10 @@ return async function handleNotes(req, res, rawId) {
     const ownerId = identity.userId;
     if (!id && req.method === 'GET') {
       const { data, error } = await db.from('notes')
-        .select('note_id,title,content').eq('owner_id', ownerId)
+        .select('note_id,title,content,owner_id').eq('owner_id', ownerId)
         .order('created_at', { ascending: true });
       if (error) throw error;
-      return res.status(200).json({ notes: (data ?? []).map(noteShape) });
+      return res.status(200).json({ notes: (data ?? []).filter(row => row.owner_id === ownerId).map(noteShape) });
     }
     if (!id && req.method === 'POST') {
       const body = req.body;
@@ -77,10 +77,10 @@ return async function handleNotes(req, res, rawId) {
     }
     if (id && req.method === 'GET') {
       const { data, error } = await db.from('notes')
-        .select('note_id,title,content').eq('note_id', id)
+        .select('note_id,title,content,owner_id').eq('note_id', id)
         .eq('owner_id', ownerId).maybeSingle();
       if (error) throw error;
-      if (!data) return json(res, 404, 'NOTE_NOT_FOUND');
+      if (!data || data.owner_id !== ownerId || data.note_id !== id) return json(res, 404, 'NOTE_NOT_FOUND');
       return res.status(200).json(noteShape(data));
     }
     if (id && req.method === 'PUT') {
@@ -88,9 +88,9 @@ return async function handleNotes(req, res, rawId) {
       const { data, error } = await db.from('notes')
         .update({ title: req.body.title.trim(), content: req.body.body })
         .eq('note_id', id).eq('owner_id', ownerId)
-        .select('note_id,title,content').maybeSingle();
+        .select('note_id,title,content,owner_id').maybeSingle();
       if (error) throw error;
-      if (!data) return json(res, 404, 'NOTE_NOT_FOUND');
+      if (!data || data.owner_id !== ownerId || data.note_id !== id) return json(res, 404, 'NOTE_NOT_FOUND');
       return res.status(200).json(noteShape(data));
     }
     if (id && req.method === 'DELETE') {
