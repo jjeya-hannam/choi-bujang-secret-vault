@@ -1,6 +1,9 @@
 // Distinct logical resources; paths remain compatible with the existing notes API.
 const RESOURCE_IDS = Object.freeze({ notes: 'student_notes', announcements: 'instructor_announcements' });
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
+// Student-defined server policy for the public practice fixture only.
+// This is not a mapping between engine pseudonyms and deployed DB owners.
+const FIXTURE_NOTE_OWNERS = Object.freeze({ demo: 'learner_fixture' });
 
 function resourceRoute(method, path, { fixture = false } = {}) {
   if (typeof path !== 'string' || path.includes('?') || path.includes('#') || path.includes('%')) return null;
@@ -17,7 +20,8 @@ function resourceRoute(method, path, { fixture = false } = {}) {
   }
   // Existing public local fixture contract uses /notes/demo rather than the deployed UUID URL.
   if (fixture && method === 'GET' && path === '/notes/demo') {
-    return { resourceId: RESOURCE_IDS.notes, route: 'GET /notes/:id', id: 'demo' };
+    return { resourceId: RESOURCE_IDS.notes, route: 'GET /notes/:id', id: 'demo',
+      ownerSubjectId: FIXTURE_NOTE_OWNERS.demo };
   }
   return null;
 }
@@ -39,6 +43,7 @@ export async function decide(request) {
       || request.service !== 'notes' || request.queryLength !== 0
       || !resource
       || resource.route !== request.route
+      || (resource.ownerSubjectId !== undefined && resource.ownerSubjectId !== request.subjectId)
       || (resource.resourceId === RESOURCE_IDS.announcements && request.method !== 'GET')) {
     decision = 'deny';
     reasonCode = 'policy_denied';

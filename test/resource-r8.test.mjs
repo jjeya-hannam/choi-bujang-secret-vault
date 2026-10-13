@@ -28,6 +28,28 @@ function database() {
 
 test('메모와 강사 공지의 자원 ID는 다르다', () => assert.notEqual(RESOURCE_IDS.notes, RESOURCE_IDS.announcements));
 
+test('가상 demo 자원은 서버 정책의 소유 주체만 허용하고 같은 경로의 다른 주체를 거부한다', async () => {
+  const { normal, suspicious } = fixtureRequests();
+  assert.equal((await decide(normal)).decision, 'allow');
+  assert.equal((await decide(suspicious)).decision, 'step_up');
+  for (const subjectId of ['other_fixture', 'learner_fixture_other', '', undefined]) {
+    const request = { ...normal, subjectId };
+    const before = structuredClone(request);
+    assert.deepEqual(await decide(request), {
+      schema: 'aleph.decision.v1', requestId: request.requestId,
+      decision: 'deny', reasonCode: 'policy_denied',
+      ruleIds: ['device_registered', 'resource_scope'],
+    });
+    assert.deepEqual(request, before);
+  }
+  // Additional verification does not confer ownership of another fixture zone.
+  assert.equal((await decide({ ...suspicious, subjectId: 'other_fixture',
+    stepUp: { verified: true, authAgeSeconds: 60 } })).decision, 'deny');
+  assert.equal((await decide({ ...normal, signals: { ...normal.signals, source: 'none' } })).decision, 'deny');
+  const unregistered = await decide({ ...normal, subjectId: 'other_fixture', deviceRegistered: false });
+  assert.equal(unregistered.reasonCode, 'device_not_registered');
+});
+
 test('판정기는 정확 경로/method/구역을 검사하고 기능 경로와 쿼리를 거부한다', async () => {
   const { normal } = fixtureRequests();
   for (const [method, path, route] of [
