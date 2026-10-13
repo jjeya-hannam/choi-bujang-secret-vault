@@ -51,6 +51,8 @@ export async function decide(request) {
       || request.service !== 'notes' || request.queryLength !== 0
       || !resource
       || resource.route !== request.route
+      // Stage 8 engine policy forbids collection reads; item ownership stays in the API.
+      || (resource.resourceId === RESOURCE_IDS.notes && resource.id === null && request.method === 'GET')
       // UUID routes are admitted to the API, not granted note ownership here.
       // The API verifies JWT sub and the stored owner_id before reading or mutating.
       // Engine pseudonyms must not be equated with database user IDs.

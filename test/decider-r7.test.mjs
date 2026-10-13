@@ -31,7 +31,7 @@ test('지역 단독 또는 복합 조건 하나가 빠진 사건은 영구 차�
 
 test('출처 없는 실제 신호는 변경하지 않고 클라이언트 헤더는 신뢰하지 않는다', async () => {
   const { suspicious } = fixtureRequests();
-  const request = { ...suspicious, path: '/api/notes', route: 'GET /api/notes', signals: { source: 'none', region: 'unknown', network: 'unknown', hour: 3 },
+  const request = { ...suspicious, path: '/api/notes/11111111-1111-4111-8111-111111111111', route: 'GET /api/notes/:id', signals: { source: 'none', region: 'unknown', network: 'unknown', hour: 3 },
     headers: { 'x-region': 'foreign', 'x-network': 'unusual' } };
   const original = structuredClone(request);
   assert.equal((await decide(request)).decision, 'allow');

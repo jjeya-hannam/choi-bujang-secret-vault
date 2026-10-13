@@ -56,9 +56,10 @@ test('가상 demo 자원은 서버 정책의 소유 주체만 허용하고 같�
 test('판정기는 정확 경로/method/구역을 검사하고 기능 경로와 쿼리를 거부한다', async () => {
   const { normal } = fixtureRequests();
   for (const [method, path, route] of [
-    ['GET', '/api/notes', 'GET /api/notes'], ['POST', '/api/notes', 'POST /api/notes'],
+    ['POST', '/api/notes', 'POST /api/notes'],
   ]) assert.equal((await decide({ ...normal, method, path, route })).decision, 'allow');
   for (const request of [
+    { ...normal, path: '/api/notes', route: 'GET /api/notes' },
     { ...normal, path: '/api/notes/export', route: 'GET /api/notes/:id' },
     { ...normal, path: '/api/notes/unknown', route: 'GET /api/notes/:id' },
     { ...normal, path: '/api/notes', route: 'PUT /api/notes' },
@@ -81,7 +82,7 @@ test('엔진 경로와 배포 경로의 UUID 입장은 소유권 허용이 아�
       }
     }
     for (const method of ['GET', 'POST']) {
-      assert.equal((await decide({ ...normal, path: prefix, method, route: `${method} ${prefix}` })).decision, 'allow');
+      assert.equal((await decide({ ...normal, path: prefix, method, route: `${method} ${prefix}` })).decision, method === 'GET' ? 'deny' : 'allow');
     }
     for (const path of [`${prefix}/export`, `${prefix}/${noteId}/export`, `${prefix}/unknown`, `${prefix}?action=export`]) {
       assert.equal((await decide({ ...normal, path, route: `GET ${prefix}/:id` })).decision, 'deny');
