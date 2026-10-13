@@ -45,7 +45,10 @@ test('가상 demo 자원은 서버 정책의 소유 주체만 허용하고 같�
   // Additional verification does not confer ownership of another fixture zone.
   assert.equal((await decide({ ...suspicious, subjectId: 'other_fixture',
     stepUp: { verified: true, authAgeSeconds: 60 } })).decision, 'deny');
-  assert.equal((await decide({ ...normal, signals: { ...normal.signals, source: 'none' } })).decision, 'deny');
+  // Risk-signal provenance cannot change the server-defined resource ownership.
+  assert.equal((await decide({ ...normal, signals: { ...normal.signals, source: 'none' } })).decision, 'allow');
+  assert.equal((await decide({ ...normal, subjectId: 'other_fixture',
+    signals: { ...normal.signals, source: 'none' } })).decision, 'deny');
   const unregistered = await decide({ ...normal, subjectId: 'other_fixture', deviceRegistered: false });
   assert.equal(unregistered.reasonCode, 'device_not_registered');
 });

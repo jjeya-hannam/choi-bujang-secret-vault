@@ -48,6 +48,7 @@ export async function runAttackChecks(config) {
       for (const [attackId, request, expected] of [
         ['local_unbound_note', { ...normal, path: `/api/notes/${id}`, route: 'GET /api/notes/:id' }, '소유 권한이 확인되지 않은 UUID 단건 deny'],
         ['local_other_subject', { ...normal, subjectId: 'other_fixture' }, '가상 본인 메모를 다른 주체가 요청하면 deny'],
+        ['local_owner_no_risk_source', { ...normal, signals: { source: 'none', region: 'unknown', network: 'unknown', hour: 14 } }, '등록된 가상 소유자의 자원은 위험 신호 출처와 관계없이 allow'],
         ['local_export_alias', { ...normal, path: '/api/notes/export', route: 'GET /api/notes/:id' }, '로컬 가상 export 별칭 deny'],
         ['local_announcement_edit', { ...normal, method: 'PUT', path: `/api/announcements/${id}`, route: 'PUT /api/announcements/:id' }, '로컬 가상 강사 권한 없는 공지 수정 deny'],
       ]) {

@@ -5,7 +5,7 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 // This is not a mapping between engine pseudonyms and deployed DB owners.
 const FIXTURE_NOTE_OWNERS = Object.freeze({ demo: 'learner_fixture' });
 
-function resourceRoute(method, path, { fixture = false } = {}) {
+function resourceRoute(method, path) {
   if (typeof path !== 'string' || path.includes('?') || path.includes('#') || path.includes('%')) return null;
   if (path === '/api/notes' && ['GET', 'POST'].includes(method)) {
     return { resourceId: RESOURCE_IDS.notes, route: `${method} /api/notes`, id: null };
@@ -19,7 +19,7 @@ function resourceRoute(method, path, { fixture = false } = {}) {
     return { resourceId: RESOURCE_IDS.announcements, route: `${method} /api/announcements/:id`, id: announcement[1] };
   }
   // Existing public local fixture contract uses /notes/demo rather than the deployed UUID URL.
-  if (fixture && method === 'GET' && path === '/notes/demo') {
+  if (method === 'GET' && path === '/notes/demo') {
     return { resourceId: RESOURCE_IDS.notes, route: 'GET /notes/:id', id: 'demo',
       ownerSubjectId: FIXTURE_NOTE_OWNERS.demo };
   }
@@ -34,7 +34,7 @@ export async function decide(request) {
   let decision = 'allow';
   let reasonCode = 'approved';
   let ruleIds = ['device_registered'];
-  const resource = resourceRoute(request.method, request.path, { fixture: request.signals?.source === 'judge_fixture' });
+  const resource = resourceRoute(request.method, request.path);
   if (request.deviceRegistered !== true) {
     decision = 'deny';
     reasonCode = 'device_not_registered';
