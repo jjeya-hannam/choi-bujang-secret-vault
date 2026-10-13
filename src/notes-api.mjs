@@ -23,6 +23,36 @@ function services() {
   return cached;
 }
 
+// Fixed diagnostic enums only: never serialize requests, identities, or database rows.
+function responseDiagnostic(req, res, log) {
+  const method = ['GET', 'POST', 'PUT', 'DELETE'].includes(req.method) ? req.method : 'OTHER';
+  let resource = 'unknown';
+  let verifiedKind = 'none';
+  let syntheticJudgeIdentity;
+  try {
+    const route = resourceRoute(req.method, new URL(req.url, 'https://api.invalid').pathname);
+    if (route?.resourceId === RESOURCE_IDS.notes) resource = route.id === null ? 'notes_collection' : 'notes_item';
+    else if (route?.resourceId === RESOURCE_IDS.announcements) resource = 'announcement_item';
+    if (typeof res.once === 'function') {
+      res.once('finish', () => {
+        try {
+          const status = Number.isInteger(res.statusCode) && res.statusCode >= 100 && res.statusCode <= 599
+            ? res.statusCode : 0;
+          const entry = { event: 'notes_response', method, resource, status, verifiedKind };
+          if (syntheticJudgeIdentity !== undefined) entry.syntheticJudgeIdentity = syntheticJudgeIdentity;
+          log(JSON.stringify(entry));
+        } catch { /* Diagnostics must never change the authentication or response outcome. */ }
+      });
+    }
+  } catch { /* Missing/mock response events or malformed diagnostic input are nonfatal. */ }
+  return identity => {
+    verifiedKind = ['student', 'judge'].includes(identity?.kind) ? identity.kind : 'none';
+    if (verifiedKind === 'judge' && ['a', 'b'].includes(identity.identity)) {
+      syntheticJudgeIdentity = identity.identity;
+    }
+  };
+}
+
 function json(res, status, error) {
   return res.status(status).json({ error });
 }
@@ -38,13 +68,15 @@ function validFields(value) {
     && value.body.length <= 10000;
 }
 
-export function createNotesHandler(getServices = services) {
+export function createNotesHandler(getServices = services, logDiagnostic = line => console.info(line)) {
 return async function handleNotes(req, res, rawId) {
+  const recordIdentity = responseDiagnostic(req, res, logDiagnostic);
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   try {
     const { db, verify } = getServices();
     const identity = await verify(req.headers.authorization);
+    recordIdentity(identity);
     if (!identity) return json(res, 401, 'AUTH_REQUIRED');
 
     const url = new URL(req.url, 'https://api.invalid');
@@ -114,13 +146,15 @@ return async function handleNotes(req, res, rawId) {
 
 export const handleNotes = createNotesHandler();
 
-export function createAnnouncementHandler(getServices = services) {
+export function createAnnouncementHandler(getServices = services, logDiagnostic = line => console.info(line)) {
   return async function handleAnnouncement(req, res) {
+    const recordIdentity = responseDiagnostic(req, res, logDiagnostic);
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     try {
       const { verify } = getServices();
       const identity = await verify(req.headers.authorization);
+      recordIdentity(identity);
       if (!identity) return json(res, 401, 'AUTH_REQUIRED');
       const url = new URL(req.url, 'https://api.invalid');
       const resource = resourceRoute(req.method, url.pathname);

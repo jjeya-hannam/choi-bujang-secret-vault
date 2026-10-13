@@ -55,6 +55,22 @@ export function deploymentIdentity(env, config) {
     );
   }
 
+  let publicHost = host.toLowerCase();
+  // A preview must retain its own deployment URL. Production may use only
+  // the system-provided production hostname matched by the configured root URL.
+  const productionHost = env.VERCEL_PROJECT_PRODUCTION_URL;
+  if (env.VERCEL_ENV === 'production' && productionHost !== undefined) {
+    if (typeof productionHost !== 'string' || !HOST.test(productionHost)) {
+      throw new Error('프로덕션 대표주소의 Vercel 시스템 정보를 확인하세요.');
+    }
+    const canonicalHost = productionHost.toLowerCase();
+    const canonicalUrl = `https://${canonicalHost}`;
+    if (config.publicAppUrl !== canonicalUrl && config.publicAppUrl !== `${canonicalUrl}/`) {
+      throw new Error('프로덕션 대표주소가 단계 설정의 공개 주소와 일치하지 않습니다.');
+    }
+    publicHost = canonicalHost;
+  }
+
   return {
     schema: 'aleph.defense.deployment.v1',
     step: config.step,
@@ -62,7 +78,7 @@ export function deploymentIdentity(env, config) {
       `https://github.com/${owner.toLowerCase()}/${repo.toLowerCase()}`,
     commit: commit.toLowerCase(),
     publicAppUrl:
-      `https://${host.toLowerCase()}`,
+      `https://${publicHost}`,
     judgeIssuer: config.judgeIssuer,
     sampleMarker: config.sampleMarker,
     ...(config.step >= 3 ? { allowedRoutes: config.allowedRoutes } : {}),
