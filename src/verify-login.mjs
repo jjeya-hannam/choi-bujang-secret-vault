@@ -40,8 +40,14 @@ function verifiedConfig(config) {
 // Create once in the server runtime. The judge intake separately compares the
 // checked-in judgeIssuer to its registered operator issuer before any attack.
 export function createLoginVerifier({ config, supabaseSecretKey, judgeKeySet,
-  supabaseClient } = {}) {
+  supabaseClient, deploymentHostname, onReject = () => {} } = {}) {
   const bound = verifiedConfig(config);
+  // VERCEL_URL is supplied by the server runtime, never by request headers.
+  // The manifest binds the current deployment to this exact hostname.
+  if (deploymentHostname !== undefined && !/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.vercel\.app$/iu.test(deploymentHostname)) {
+    throw new TypeError('invalid_login_deployment_origin');
+  }
+  const audiences = [...new Set([bound.audience, deploymentHostname?.toLowerCase()].filter(Boolean))];
   if (!supabaseClient && (typeof supabaseSecretKey !== 'string'
       || !supabaseSecretKey.trim() || supabaseSecretKey !== supabaseSecretKey.trim())) {
     throw new TypeError('missing_supabase_secret_key');
@@ -65,10 +71,10 @@ export function createLoginVerifier({ config, supabaseSecretKey, judgeKeySet,
     if (issuer === bound.judgeIssuer) {
       try {
         const { payload, protectedHeader } = await jwtVerify(token, keys, {
-          issuer: bound.judgeIssuer, audience: bound.audience, algorithms: ['ES256'],
+          issuer: bound.judgeIssuer, audience: audiences, algorithms: ['ES256'],
           maxTokenAge: '15 minutes', clockTolerance: 5,
         });
-        if (protectedHeader.alg !== 'ES256' || payload.aud !== bound.audience
+        if (protectedHeader.alg !== 'ES256' || typeof payload.aud !== 'string' || !audiences.includes(payload.aud)
             || !UUID_V4.test(payload.sub ?? '') || !UUID_V4.test(payload.aleph_run ?? '')
             || payload.aleph_role !== 'judge'
             || !['a', 'b'].includes(payload.aleph_identity)
@@ -76,7 +82,14 @@ export function createLoginVerifier({ config, supabaseSecretKey, judgeKeySet,
             || payload.exp <= payload.iat || payload.exp - payload.iat > 900) return null;
         return Object.freeze({ kind: 'judge', userId: payload.sub,
           runId: payload.aleph_run, identity: payload.aleph_identity });
-      } catch { return null; }
+      } catch (error) {
+        // Only fixed diagnostic codes leave this verifier; no token/claims/IDs.
+        try {
+          onReject(error?.code === 'ERR_JWT_CLAIM_VALIDATION_FAILED' && error?.claim === 'aud'
+            ? 'judge_audience_rejected' : 'judge_token_rejected');
+        } catch { /* Diagnostic failure must not change an authentication denial. */ }
+        return null;
+      }
     }
     if (issuer === bound.studentIssuer) {
       try {

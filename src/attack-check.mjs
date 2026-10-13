@@ -46,7 +46,8 @@ export async function runAttackChecks(config) {
       const { normal } = fixtureRequests();
       const id = '11111111-1111-4111-8111-111111111111';
       for (const [attackId, request, expected] of [
-        ['local_unbound_note', { ...normal, path: `/api/notes/${id}`, route: 'GET /api/notes/:id' }, '소유 권한이 확인되지 않은 UUID 단건 deny'],
+        ['local_note_api_admission', { ...normal, path: `/api/notes/${id}`, route: 'GET /api/notes/:id' }, '정확 UUID 경로의 API 진입 allow; 최종 소유 권한은 API에서 검증'],
+        ['local_note_engine_admission', { ...normal, path: `/notes/${id}`, route: 'GET /notes/:id' }, '정규화된 엔진 UUID 경로의 API 진입 allow; 최종 소유 권한은 API에서 검증'],
         ['local_other_subject', { ...normal, subjectId: 'other_fixture' }, '가상 본인 메모를 다른 주체가 요청하면 deny'],
         ['local_owner_no_risk_source', { ...normal, signals: { source: 'none', region: 'unknown', network: 'unknown', hour: 14 } }, '등록된 가상 소유자의 자원은 위험 신호 출처와 관계없이 allow'],
         ['local_export_alias', { ...normal, path: '/api/notes/export', route: 'GET /api/notes/:id' }, '로컬 가상 export 별칭 deny'],

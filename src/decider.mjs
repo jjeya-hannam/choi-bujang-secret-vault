@@ -7,16 +7,24 @@ const FIXTURE_NOTE_OWNERS = Object.freeze({ demo: 'learner_fixture' });
 
 function resourceRoute(method, path) {
   if (typeof path !== 'string' || path.includes('?') || path.includes('#') || path.includes('%')) return null;
-  if (path === '/api/notes' && ['GET', 'POST'].includes(method)) {
-    return { resourceId: RESOURCE_IDS.notes, route: `${method} /api/notes`, id: null };
+  for (const prefix of ['/notes', '/api/notes']) {
+    if (path === prefix && ['GET', 'POST'].includes(method)) {
+      return { resourceId: RESOURCE_IDS.notes, route: `${method} ${prefix}`, id: null };
+    }
+    if (path.startsWith(`${prefix}/`)) {
+      const id = path.slice(prefix.length + 1);
+      if (UUID_PATTERN.test(id) && ['GET', 'PUT', 'DELETE'].includes(method)) {
+        return { resourceId: RESOURCE_IDS.notes, route: `${method} ${prefix}/:id`, id };
+      }
+    }
   }
-  const note = /^\/api\/notes\/([^/]+)$/u.exec(path);
-  if (note && UUID_PATTERN.test(note[1]) && ['GET', 'PUT', 'DELETE'].includes(method)) {
-    return { resourceId: RESOURCE_IDS.notes, route: `${method} /api/notes/:id`, id: note[1] };
-  }
-  const announcement = /^\/api\/announcements\/([^/]+)$/u.exec(path);
-  if (announcement && UUID_PATTERN.test(announcement[1]) && ['GET', 'PUT'].includes(method)) {
-    return { resourceId: RESOURCE_IDS.announcements, route: `${method} /api/announcements/:id`, id: announcement[1] };
+  for (const prefix of ['/announcements', '/api/announcements']) {
+    if (path.startsWith(`${prefix}/`)) {
+      const id = path.slice(prefix.length + 1);
+      if (UUID_PATTERN.test(id) && ['GET', 'PUT'].includes(method)) {
+        return { resourceId: RESOURCE_IDS.announcements, route: `${method} ${prefix}/:id`, id };
+      }
+    }
   }
   // Existing public local fixture contract uses /notes/demo rather than the deployed UUID URL.
   if (method === 'GET' && path === '/notes/demo') {
@@ -43,9 +51,10 @@ export async function decide(request) {
       || request.service !== 'notes' || request.queryLength !== 0
       || !resource
       || resource.route !== request.route
-      // A valid UUID identifies a resource, but does not grant ownership.
-      // Without a trusted owner binding, item access must fail closed.
-      || (resource.id !== null && resource.ownerSubjectId !== request.subjectId)
+      // UUID routes are admitted to the API, not granted note ownership here.
+      // The API verifies JWT sub and the stored owner_id before reading or mutating.
+      // Engine pseudonyms must not be equated with database user IDs.
+      || (resource.ownerSubjectId !== undefined && resource.ownerSubjectId !== request.subjectId)
       || (resource.resourceId === RESOURCE_IDS.announcements && request.method !== 'GET')) {
     decision = 'deny';
     reasonCode = 'policy_denied';

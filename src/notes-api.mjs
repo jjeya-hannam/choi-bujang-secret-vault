@@ -16,7 +16,9 @@ function services() {
     db: createClient(url, key, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     }),
-    verify: createLoginVerifier({ config, supabaseSecretKey: key }),
+    verify: createLoginVerifier({ config, supabaseSecretKey: key,
+      deploymentHostname: process.env.VERCEL_URL,
+      onReject: code => console.warn('notes authorization rejected', code) }),
   };
   return cached;
 }
