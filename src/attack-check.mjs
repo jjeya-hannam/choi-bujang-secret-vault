@@ -1,6 +1,7 @@
 // The student changes this check as each stage adds an attack to the same app.
 // Never return tokens, private keys, real names, or note bodies.
 import { decide } from './decider.mjs';
+import { detect } from './detect.mjs';
 import { fixtureRequests } from '../scripts/fixture-7.mjs';
 
 export async function runAttackChecks(config) {
@@ -60,6 +61,19 @@ export async function runAttackChecks(config) {
       }
       attempts.push({ attackId: 'live_resource_accounts', expected: '실제 A 자기 메모 허용·B 타인 메모 거부·학생 공지 수정 거부',
         observed: '미실행: 실제 계정 요청은 보내지 않음. 별도 가상 API 시험으로 소유자·권한 거부를 검증함' });
+    }
+    if (config.step >= 9) {
+      for (const [count, expected] of [[120, 'observe'], [121, 'propose_revocation/burst_read']]) {
+        const events = Array.from({ length: count }, (_, i) => ({
+          at: new Date(Date.UTC(2026, 9, 1) + i * 2000).toISOString(),
+          method: 'GET', identity: { sub: 'learner_fixture' },
+        }));
+        const result = detect(events);
+        attempts.push({ attackId: `local_detection_${count}`, expected: `로컬 가상 조회 ${count}건 ${expected}`,
+          observed: `탐지 함수 직접 실행: ${result.action}${result.reasonCode ? '/' + result.reasonCode : ''}; 실제 회수·시간·심판 판정 아님` });
+      }
+      attempts.push({ attackId: 'live_detection_revocation', expected: '심판의 가상 사건으로 복합 탐지·단일 기기 회수·시간 확인',
+        observed: '미실행: 공개 연습 계약에는 네트워크·기기가 없음. 실제 회수 및 경과 시간은 심판에서 확인 필요' });
     }
     return attempts;
   }
