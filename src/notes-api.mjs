@@ -2,8 +2,9 @@ import { randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import config from '../aleph.config.json' with { type: 'json' };
 import { createLoginVerifier } from './verify-login.mjs';
+import { resourceRoute, RESOURCE_IDS, UUID_PATTERN } from './resource-policy.mjs';
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
+const UUID = UUID_PATTERN;
 let cached;
 
 function services() {
@@ -35,15 +36,20 @@ function validFields(value) {
     && value.body.length <= 10000;
 }
 
-export async function handleNotes(req, res, rawId) {
+export function createNotesHandler(getServices = services) {
+return async function handleNotes(req, res, rawId) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   try {
-    const { db, verify } = services();
+    const { db, verify } = getServices();
     const identity = await verify(req.headers.authorization);
     if (!identity) return json(res, 401, 'AUTH_REQUIRED');
 
+    const url = new URL(req.url, 'https://api.invalid');
+    const resource = resourceRoute(req.method, url.pathname);
+    if (url.search || !resource || resource.resourceId !== RESOURCE_IDS.notes) return json(res, 403, 'RESOURCE_FORBIDDEN');
     const id = typeof rawId === 'string' ? rawId : null;
+    if (resource.id !== id) return json(res, 400, 'INVALID_ID');
     if (rawId !== undefined && (!id || !UUID.test(id))) return json(res, 400, 'INVALID_ID');
     const ownerId = identity.userId;
     if (!id && req.method === 'GET') {
@@ -101,4 +107,27 @@ export async function handleNotes(req, res, rawId) {
     console.error('notes request failed', error?.code ?? error?.name ?? 'unknown');
     return json(res, 500, 'NOTES_UNAVAILABLE');
   }
+};
 }
+
+export const handleNotes = createNotesHandler();
+
+export function createAnnouncementHandler(getServices = services) {
+  return async function handleAnnouncement(req, res) {
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    try {
+      const { verify } = getServices();
+      const identity = await verify(req.headers.authorization);
+      if (!identity) return json(res, 401, 'AUTH_REQUIRED');
+      const url = new URL(req.url, 'https://api.invalid');
+      const resource = resourceRoute(req.method, url.pathname);
+      if (url.search || !resource || resource.resourceId !== RESOURCE_IDS.announcements) return json(res, 403, 'RESOURCE_FORBIDDEN');
+      // The verified identity contract provides no instructor authority or announcement storage.
+      // Neither body.role nor a client header can supply the missing server authority.
+      if (req.method !== 'GET') return json(res, 403, 'INSTRUCTOR_AUTHORITY_REQUIRED');
+      return json(res, 404, 'ANNOUNCEMENT_NOT_FOUND');
+    } catch { return json(res, 500, 'ANNOUNCEMENTS_UNAVAILABLE'); }
+  };
+}
+export const handleAnnouncement = createAnnouncementHandler();

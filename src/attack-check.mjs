@@ -42,6 +42,20 @@ export async function runAttackChecks(config) {
       attempts.push({ attackId: 'live_step_up_verification', expected: '실제 계약이 제공될 때 재로그인 확인 요청·응답 검증',
         observed: '미실행: 현재 계약에 실제 재로그인 확인 호출이 없음. 가상 요청 시험만 실행함' });
     }
+    if (config.step >= 8) {
+      const { normal } = fixtureRequests();
+      const id = '11111111-1111-4111-8111-111111111111';
+      for (const [attackId, request, expected] of [
+        ['local_notes_route', { ...normal, path: `/api/notes/${id}`, route: 'GET /api/notes/:id' }, '로컬 가상 메모 읽기 구역 allow; API 소유자 검사는 별도'],
+        ['local_export_alias', { ...normal, path: '/api/notes/export', route: 'GET /api/notes/:id' }, '로컬 가상 export 별칭 deny'],
+        ['local_announcement_edit', { ...normal, method: 'PUT', path: `/api/announcements/${id}`, route: 'PUT /api/announcements/:id' }, '로컬 가상 강사 권한 없는 공지 수정 deny'],
+      ]) {
+        const result = await decide(request);
+        attempts.push({ attackId, expected, observed: `로컬 판정기 직접 실행: ${result.decision}/${result.reasonCode}; 실제 API 계정·심판 판정 아님` });
+      }
+      attempts.push({ attackId: 'live_resource_accounts', expected: '실제 A 자기 메모 허용·B 타인 메모 거부·학생 공지 수정 거부',
+        observed: '미실행: 실제 계정 요청은 보내지 않음. 별도 가상 API 시험으로 소유자·권한 거부를 검증함' });
+    }
     return attempts;
   }
   if (config.step !== 1) throw new Error('이 단계의 공격 점검을 src/attack-check.mjs에 구현해 주세요.');

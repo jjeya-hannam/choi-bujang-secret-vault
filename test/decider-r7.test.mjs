@@ -14,7 +14,7 @@ test('정상 allow, 복합 가상 사건 step_up 및 계약 보존', async () =>
   assert.equal(result.reasonCode, 'step_up_required');
   assert.deepEqual(result.ruleIds, ['device_registered', 'step_up_required']);
   assert.deepEqual(suspicious, original);
-  assert.deepEqual(RULE_IDS, ['device_registered', 'step_up_required']);
+  assert.deepEqual(RULE_IDS, ['device_registered', 'step_up_required', 'resource_route']);
 });
 
 test('지역 단독 또는 복합 조건 하나가 빠진 사건은 영구 차단하지 않는다', async () => {
@@ -31,12 +31,12 @@ test('지역 단독 또는 복합 조건 하나가 빠진 사건은 영구 차�
 
 test('출처 없는 실제 신호는 변경하지 않고 클라이언트 헤더는 신뢰하지 않는다', async () => {
   const { suspicious } = fixtureRequests();
-  const request = { ...suspicious, signals: { source: 'none', region: 'unknown', network: 'unknown', hour: 3 },
+  const request = { ...suspicious, path: '/api/notes', route: 'GET /api/notes', signals: { source: 'none', region: 'unknown', network: 'unknown', hour: 3 },
     headers: { 'x-region': 'foreign', 'x-network': 'unusual' } };
   const original = structuredClone(request);
   assert.equal((await decide(request)).decision, 'allow');
   assert.deepEqual(request, original);
-  assert.equal((await decide({ ...suspicious, signals: { ...suspicious.signals, source: 'client_header' } })).decision, 'allow');
+  assert.equal((await decide({ ...request, signals: { ...suspicious.signals, source: 'client_header' } })).decision, 'allow');
 });
 
 test('가상 재확인 나이의 유효성 및 미등록 기기 거부 우선순위', async () => {
