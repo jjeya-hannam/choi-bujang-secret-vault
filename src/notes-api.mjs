@@ -48,8 +48,8 @@ return async function handleNotes(req, res, rawId) {
     const url = new URL(req.url, 'https://api.invalid');
     const resource = resourceRoute(req.method, url.pathname);
     if (url.search || !resource || resource.resourceId !== RESOURCE_IDS.notes) return json(res, 403, 'RESOURCE_FORBIDDEN');
-    const id = typeof rawId === 'string' ? rawId : null;
-    if (resource.id !== id) return json(res, 400, 'INVALID_ID');
+    const id = typeof rawId === 'string' ? rawId.toLowerCase() : null;
+    if ((resource.id?.toLowerCase() ?? null) !== id) return json(res, 400, 'INVALID_ID');
     if (rawId !== undefined && (!id || !UUID.test(id))) return json(res, 400, 'INVALID_ID');
     const ownerId = identity.userId;
     if (!id && req.method === 'GET') {

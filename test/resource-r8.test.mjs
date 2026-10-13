@@ -108,3 +108,11 @@ test('목록은 반환 소유자를 재검사하고 응답에서 소유자를 �
   assert.equal(res.statusCode,200); assert.equal(res.data.notes.length,1);
   assert.deepEqual(Object.keys(res.data.notes[0]).sort(),['body','id','title']);
 });
+
+test('대문자 UUID 요청도 저장된 소문자 UUID와 같은 자료로 대조한다', async () => {
+  const canonical = 'abcdefab-abcd-4abc-8abc-abcdefabcdef';
+  const db={from(){return {select(){return this;},eq(){return this;},async maybeSingle(){return {data:{note_id:canonical,owner_id:'student_a',title:'fixture',content:'fixture'},error:null};}};}};
+  const handler=createNotesHandler(()=>({db,verify:async()=>({userId:'student_a'})}));
+  const res=response(); await handler({url:`/api/notes/${canonical.toUpperCase()}`,method:'GET',headers:{}},res,canonical.toUpperCase());
+  assert.equal(res.statusCode,200); assert.equal(res.data.id,canonical);
+});
