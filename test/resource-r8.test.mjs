@@ -68,14 +68,14 @@ test('판정기는 정확 경로/method/구역을 검사하고 기능 경로와 
   ]) assert.equal((await decide(request)).decision, 'deny');
 });
 
-test('엔진 경로와 배포 경로의 UUID 입장은 소유권 허용이 아니며 정확 route만 지원한다', async () => {
+test('엔진과 배포 경로의 UUID 자원은 소유권 연결 없으면 거부하고 정확 route만 지원한다', async () => {
   const { normal } = fixtureRequests();
   for (const prefix of ['/notes', '/api/notes']) {
     for (const subjectId of ['learner_fixture', 'other_fixture']) {
       for (const method of ['GET', 'PUT', 'DELETE']) {
         const request = { ...normal, subjectId, method, path: `${prefix}/${noteId}`,
           route: `${method} ${prefix}/:id`, signals: { source: 'none', region: 'unknown', network: 'unknown', hour: 14 } };
-        assert.equal((await decide(request)).decision, 'allow');
+        assert.equal((await decide(request)).decision, 'deny');
         const otherPrefix = prefix === '/notes' ? '/api/notes' : '/notes';
         assert.equal((await decide({ ...request, route: `${method} ${otherPrefix}/:id` })).decision, 'deny');
       }
@@ -89,7 +89,7 @@ test('엔진 경로와 배포 경로의 UUID 입장은 소유권 허용이 아�
   }
 });
 
-test('엔진 입장 후 API에서 A 자기 메모만 읽기·수정하고 B의 A 메모 읽기·수정은 거부한다', async () => {
+test('엔진의 미확인 UUID 거부와 API 소유자 필터를 각각 확인한다', async () => {
   const { normal } = fixtureRequests();
   for (const prefix of ['/notes', '/api/notes']) {
     const db = database();
@@ -103,7 +103,8 @@ test('엔진 입장 후 API에서 A 자기 메모만 읽기·수정하고 B의 A
         // An engine pseudonym and a JWT user ID are separate trusted inputs, not compared to each other.
         const admission = await decide({ ...normal, subjectId, method,
           path: `${prefix}/${noteId}`, route: `${method} ${prefix}/:id` });
-        assert.equal(admission.decision, 'allow');
+        // Unknown UUID owner binding must not be interpreted as authorized by the engine.
+        assert.equal(admission.decision, 'deny');
         const before = structuredClone(db.row);
         const res = response();
         await handler({ url: `/api/notes/${noteId}`, method, headers: {},
