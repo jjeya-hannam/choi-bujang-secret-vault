@@ -59,7 +59,9 @@ export async function decide(request) {
       // UUID routes are admitted to the API, not granted note ownership here.
       // The API verifies JWT sub and the stored owner_id before reading or mutating.
       // Engine pseudonyms must not be equated with database user IDs.
-      || (resource.ownerSubjectId !== undefined && resource.ownerSubjectId !== request.subjectId)
+      // Only a trusted resource->subject owner binding permits item access.
+      // A syntactically valid UUID alone is not proof of ownership.
+      || (resource.id !== null && resource.ownerSubjectId !== request.subjectId)
       || (resource.resourceId === RESOURCE_IDS.announcements && request.method !== 'GET')) {
     decision = 'deny';
     reasonCode = 'policy_denied';
