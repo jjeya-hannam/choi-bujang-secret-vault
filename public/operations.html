@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#07101b">
+  <link rel="icon" href="/icons/vault-192.png">
+  <link rel="stylesheet" href="/operations.css">
+  <title>작전실 · 최 부장 보관함</title>
+</head>
+<body>
+  <a class="skip-link" href="#main">작전실 본문으로 이동</a>
+  <header><a class="brand" href="/">BYTE BACK / VAULT</a><nav aria-label="자료실 메뉴"><a href="/">자료실</a><a aria-current="page" href="/operations.html">작전실</a><a href="/bonus.html">XDR 실습</a></nav></header>
+  <main id="main">
+    <div class="eyebrow">Defense operations · Evidence record</div>
+    <div class="title-row"><div><h1>보관함 작전실</h1><p class="lead">검증한 내용과 아직 확인하지 못한 내용을 함께 봅니다.</p></div><button id="retry" type="button">기록 다시 읽기</button></div>
+    <p id="load-status" role="status" aria-live="polite">서버에서 검증 기록을 읽는 중입니다.</p>
+    <section class="panel provenance" aria-labelledby="provenance-heading">
+      <h2 id="provenance-heading">이 기록의 기준</h2>
+      <dl><div><dt>검증 대상 커밋</dt><dd id="checked-commit">미확인</dd></div><div><dt>현재 배포 커밋 · 서버 제공</dt><dd id="deployed-commit">미확인</dd></div><div><dt>기록 생성 시각 · 한국 시간</dt><dd id="generated-at">미확인</dd></div><div><dt>운영 엔진</dt><dd>ALEPH SDP engine</dd></div><div><dt>학생 구현</dt><dd>자료실 화면 · 정책 규칙 · 서버 API</dd></div></dl>
+      <p id="commit-alignment" class="small">현재 배포와 검증 대상의 일치 여부는 미확인입니다.</p>
+      <p class="small">운영 엔진과 학생 구현은 서로 다른 구성 요소입니다. 아래 로컬 연습, 실제 HTTP 점검, 과거 심판 기록의 출처를 구분해 읽어 주세요. 기록이 존재하는 것만으로 현재 배포와 전체 공격 시험의 통과를 뜻하지 않습니다.</p>
+    </section>
+    <section aria-labelledby="summary-heading">
+      <h2 id="summary-heading" class="section-heading">연결과 대응 확인</h2>
+      <div class="summary-grid">
+        <article class="panel"><h3>실제 API</h3><p id="liveApi" class="state">미확인</p><p class="small">실제 HTTP 요청의 증거</p></article>
+        <article class="panel"><h3>이상 탐지</h3><p id="detection" class="state">미확인</p><p class="small">운영 사건 전달과 탐지의 증거</p></article>
+        <article class="panel"><h3>접속 회수</h3><p id="revocation" class="state">미확인</p><p class="small">제안과 실제 회수 집행을 구분</p></article>
+        <article class="panel"><h3>자료 복구</h3><p id="recovery" class="state">미확인</p><p class="small">지정 자료의 복구 확인 증거</p></article>
+      </div>
+    </section>
+    <section class="panel campaign" aria-labelledby="campaign-heading">
+      <div><h2 id="campaign-heading">공식 41개 공격 시험</h2><p id="campaign-basis" class="small">공식 항목별 실행 결과를 아직 확인하지 못했습니다.</p></div>
+      <dl><div><dt>실행 기록</dt><dd id="campaign-executed">미확인</dd></div><div><dt>미실행</dt><dd id="campaign-not-run">미확인</dd></div></dl>
+      <p class="small">공식 공격 항목별 실행 결과가 제공되지 않아 현재 통합 실행을 확인한 항목은 없습니다. 과거 단계별 100점과 아래 로컬 점검을 이 시험의 실행 수에 합산하지 않습니다.</p>
+    </section>
+    <section class="panel" aria-labelledby="snapshot-heading">
+      <h2 id="snapshot-heading">정책 코드 복구 사본</h2>
+      <p class="small">사본 manifest의 버전 정보입니다. 실제 정책 복구 수행이나 메모 자료 복구 완료를 의미하지 않습니다.</p>
+      <dl><div><dt>사본 버전</dt><dd id="snapshot-version">미확인</dd></div><div><dt>사본 기준 커밋</dt><dd id="snapshot-commit">미확인</dd></div><div><dt>manifest 등록 파일</dt><dd id="snapshot-files">미확인</dd></div><div><dt>정보 출처</dt><dd>policy-backups/stage9/manifest.json</dd></div></dl>
+      <p id="snapshot-status" class="small">사본 메타데이터를 아직 확인하지 못했습니다.</p>
+    </section>
+    <section class="panel" aria-labelledby="rules-heading"><h2 id="rules-heading">학생 판정기에 등록한 규칙</h2><p class="small">현재 규칙 이름을 표시합니다. 이름의 존재와 운영 집행 확인은 별개입니다.</p><ul id="rules" class="rule-list"><li>기록 미확인</li></ul></section>
+    <section class="panel checks-panel" aria-labelledby="checks-heading">
+      <h2 id="checks-heading">단계별 검증 기록</h2><p class="small">1~11단계 기능의 정상·거부·공격 점검을 출처와 시각별로 확인합니다. 과거 기록은 별도로 표시합니다.</p>
+      <p class="small"><code>student_check_</code>로 시작하는 요청 ID는 학생 점검의 상관값입니다. 운영 엔진이 발급한 요청 ID와 구분해서 읽어 주세요.</p>
+      <form id="filters" class="filters" aria-label="검증 기록 필터">
+        <label for="stage-filter">단계<select id="stage-filter"><option value="all">전체 단계</option></select></label>
+        <label for="source-filter">출처<select id="source-filter"><option value="all">전체 출처</option><option value="live_http">실제 HTTP</option><option value="local_api">로컬 API</option><option value="local_decider">로컬 판정기</option><option value="local_sql">로컬 SQL</option><option value="judge">심판</option><option value="not_run">미실행</option></select></label>
+        <label for="status-filter">상태<select id="status-filter"><option value="all">전체 상태</option><option value="passed">통과 기록</option><option value="failed">실패</option><option value="not_run">미실행</option><option value="historical">과거 기록</option><option value="unavailable">확인 불가</option></select></label>
+      </form>
+      <p id="row-count" class="small" role="status" aria-live="polite">검증 기록 미확인</p>
+      <div class="table-wrap" role="region" aria-label="검증 기록 표 · 가로로 스크롤할 수 있습니다" tabindex="0">
+        <table><caption>검증 항목의 예상 결과와 실제 기록</caption><thead><tr><th scope="col">단계 / 항목</th><th scope="col">영역</th><th scope="col">유형</th><th scope="col">예상</th><th scope="col">실제</th><th scope="col">요청 ID</th><th scope="col">확인 시각 · KST</th><th scope="col">출처</th><th scope="col">상태</th></tr></thead><tbody id="checks"><tr><td colspan="9">서버 기록을 읽는 중입니다.</td></tr></tbody></table>
+      </div>
+    </section>
+  </main>
+  <footer>공개 가능한 검증 코드와 시각만 표시합니다. 메모 본문·로그인 토큰·사용자 정보는 표시하거나 브라우저에 저장하지 않습니다.</footer>
+  <script type="module" src="/operations.js"></script>
+</body>
+</html>
