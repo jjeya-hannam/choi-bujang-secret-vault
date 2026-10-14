@@ -148,3 +148,11 @@ requestId의 `student_check_` 값은 학생 점검 상관 ID이며 운영 엔진
 커밋 `9b5e68449360`의 심판은 10개 attackId 모두 대응 요청 기록이 없다고 알렸고, 요청하지 않은 항목의 observed는 정확히 `not_run`이어야 한다고 명시했습니다. 이번 12단계 제출 점검에서는 대응되지 않은 10개 항목 모두를 정확한 `not_run`으로 반환하고 HTTP 요청도 보내지 않습니다. 이 목록은 실행 결과가 아닌 미실행 계획이며 10개 통과로 계산하지 않습니다. 다른 단계의 HTTP 점검에서 네트워크로 응답을 확인하지 못한 경우도 성공 결과를 만들지 않습니다. 설명은 expected와 문서에 남깁니다.
 
 나머지 4개 실제 HTTP 응답은 기존 독립 점검에서 확인했지만, 심판의 attackId별 요청 기록으로 연결되었다는 증거는 없습니다. 요청 상관 연결의 공식 계약은 현재 코드·공개 시작 파일에 없으므로 임의 헤더·쿼리를 추가하거나 이 부분이 해결됐다고 단정하지 않습니다. 이번에는 화면 수치·서버 보고서·보호 API를 변경하지 않습니다. 관련 검사만 실행합니다. 기존 독립 HTTP 진단을 심판의 attackId별 요청 기록으로 대체하지 않으며, 12단계의 실제 실행 증거를 확보한 것은 아닙니다. 수정본의 점수는 실제 재제출 후 별도로 확인해야 합니다.
+
+## 보너스 xdr-03 저장점
+
+known-cve 모듈은 CVE-2021-44228 형태의 JNDI 원격 조회와 확인된 점검 도구 흔적을 분석합니다. patterns.json의 이름·조건·근거를 decide.mjs 상단 상수로 복사했고, 판정기는 다른 파일·패키지·네트워크·파일 입출력 없이 decide(alert)를 동기 실행합니다. confidence 0.85 이상 block, 0.5 이상 alert, 그 아래 record이며 reason은 패턴 이름 또는 no_matching_pattern입니다. 확인용 read-alerts.mjs는 다섯 필드만 추출하고 비밀값처럼 보이는 문자열을 가리며, 판정기가 불러오지 않습니다.
+
+2026-10-14 저장점용으로 `npm run xdr:run -- known-cve`를 실제 재실행했습니다. xdr/known-cve/result.json에는 가상 사건24개, block8·alert8·record8이 기록됐고 정상 사건8개는 모두 record(정상 차단0)입니다. 원본 fixture는 변경하지 않았으며 실제 심판 승인이나 운영 공격 차단의 증거로 주장하지 않습니다. 중단된 다른 작업과 기존 자료실 설정은 보존합니다.
+
+다시 확인하려면 `npm run xdr:run -- known-cve`를 실행하고 result.json의 counts를 읽습니다. 경보 읽기 확인은 `node xdr/known-cve/read-alerts.mjs`, 독립 검사 명령은 `node --test test/known-cve-read-alerts.test.mjs test/known-cve-decide.test.mjs`입니다. 저장점에는 known-cve 읽기·패턴·판정·결과, 관련 검사 두 파일과 이 단계 기록만 포함합니다. 배포·심판 제출은 이번 요청에서 실행하지 않습니다.

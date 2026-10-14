@@ -1,0 +1,22 @@
+{
+  "schema": "aleph.xdr.patterns.v1",
+  "moduleKey": "known-cve",
+  "source": "https://logging.apache.org/security.html",
+  "patterns": [
+    {
+      "name": "header_jndi_lookup",
+      "condition": "로그에 반영되는 요청 헤더에서 jndi:ldap 같은 JNDI 원격 조회 식별 표기가 확인된 경우. 로그 처리 경로와 취약 버전을 별도로 확인하며, 표기만으로 실제 원격 조회나 악용 성공을 단정하지 않음.",
+      "evidence": "Apache는 CVE-2021-44228의 로그 메시지·매개변수와 공격자가 제어하는 LDAP endpoint를 통한 JNDI 조회 위험을 설명한다. log4j-scan은 헤더 점검을 지원하며, 공개 앱 입력 악용은 MITRE T1190의 검토 범주다. https://logging.apache.org/security.html https://github.com/fullhunt/log4j-scan https://attack.mitre.org/techniques/T1190/"
+    },
+    {
+      "name": "parameter_jndi_lookup",
+      "condition": "로그에 반영되는 GET 또는 POST 인자에서 jndi:ldap 같은 JNDI 원격 조회 식별 표기가 확인된 경우. 인자가 실제 로그 처리에 전달되는지 별도로 확인하며, 표기만으로 취약성이나 악용 성공을 단정하지 않음.",
+      "evidence": "Apache는 CVE-2021-44228에서 제어 가능한 로그 메시지·매개변수의 JNDI 조회 위험을 설명한다. log4j-scan은 GET·POST 인자 점검을 지원하며, MITRE T1190은 공개 앱 취약점 악용을 다룬다. https://logging.apache.org/security.html https://github.com/fullhunt/log4j-scan https://attack.mitre.org/techniques/T1190/"
+    },
+    {
+      "name": "known_log4shell_scanner_trace",
+      "condition": "확인된 경보에 log4j-scan 등 CVE-2021-44228 점검 도구 사용이 확인 가능한 도구명이나 검증된 표식으로 명시된 경우의 약한 검토 신호. 일반 scan·curl·브라우저 User-Agent·CVE 단어만으로 충족하지 않으며, 권한 있는 진단 가능성을 구분하고 악성이나 성공을 단정하지 않음. 모든 요청에 동일한 도구 식별자가 있다는 가정은 하지 않음.",
+      "evidence": "log4j-scan 유지관리자는 CVE-2021-44228 점검과 헤더·GET·POST 인자 지원을 설명하지만 도구 사용 자체는 악용 성공 증거가 아니다. Apache의 취약점 조건과 MITRE T1190의 공개 앱 악용 맥락을 함께 검토한다. https://github.com/fullhunt/log4j-scan https://logging.apache.org/security.html https://attack.mitre.org/techniques/T1190/"
+    }
+  ]
+}
