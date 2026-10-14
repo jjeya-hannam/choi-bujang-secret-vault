@@ -146,6 +146,289 @@
       "evidenceAlertIds": [
         "wi-08"
       ]
+    },
+    {
+      "moduleKey": "known-cve",
+      "action": "deny",
+      "sourceAddress": "203.0.113.10",
+      "expiresAt": "2026-10-14T07:47:12.570Z",
+      "evidenceAlertIds": [
+        "kc-01",
+        "kc-02"
+      ]
+    },
+    {
+      "moduleKey": "known-cve",
+      "action": "deny",
+      "sourceAddress": "198.51.100.16",
+      "expiresAt": "2026-10-14T07:47:12.570Z",
+      "evidenceAlertIds": [
+        "kc-03"
+      ]
+    },
+    {
+      "moduleKey": "known-cve",
+      "action": "deny",
+      "sourceAddress": "192.0.2.16",
+      "expiresAt": "2026-10-14T07:47:12.570Z",
+      "evidenceAlertIds": [
+        "kc-04"
+      ]
+    },
+    {
+      "moduleKey": "known-cve",
+      "action": "deny",
+      "sourceAddress": "203.0.113.24",
+      "expiresAt": "2026-10-14T07:47:12.570Z",
+      "evidenceAlertIds": [
+        "kc-05"
+      ]
+    },
+    {
+      "moduleKey": "known-cve",
+      "action": "deny",
+      "sourceAddress": "198.51.100.24",
+      "expiresAt": "2026-10-14T07:47:12.570Z",
+      "evidenceAlertIds": [
+        "kc-06"
+      ]
+    },
+    {
+      "moduleKey": "known-cve",
+      "action": "deny",
+      "sourceAddress": "192.0.2.24",
+      "expiresAt": "2026-10-14T07:47:12.570Z",
+      "evidenceAlertIds": [
+        "kc-07"
+      ]
+    },
+    {
+      "moduleKey": "known-cve",
+      "action": "deny",
+      "sourceAddress": "203.0.113.31",
+      "expiresAt": "2026-10-14T07:47:12.570Z",
+      "evidenceAlertIds": [
+        "kc-08"
+      ]
+    },
+    {
+      "moduleKey": "exfiltration",
+      "action": "deny",
+      "sourceAddress": "192.0.2.20",
+      "expiresAt": "2026-10-14T08:51:02.942Z",
+      "evidenceAlertIds": [
+        "ex-01",
+        "ex-02"
+      ]
+    },
+    {
+      "moduleKey": "exfiltration",
+      "action": "deny",
+      "sourceAddress": "198.51.100.20",
+      "expiresAt": "2026-10-14T08:51:02.942Z",
+      "evidenceAlertIds": [
+        "ex-03"
+      ]
+    },
+    {
+      "moduleKey": "exfiltration",
+      "action": "deny",
+      "sourceAddress": "203.0.113.20",
+      "expiresAt": "2026-10-14T08:51:02.942Z",
+      "evidenceAlertIds": [
+        "ex-04"
+      ]
+    },
+    {
+      "moduleKey": "exfiltration",
+      "action": "deny",
+      "sourceAddress": "192.0.2.25",
+      "expiresAt": "2026-10-14T08:51:02.942Z",
+      "evidenceAlertIds": [
+        "ex-05"
+      ]
+    },
+    {
+      "moduleKey": "exfiltration",
+      "action": "deny",
+      "sourceAddress": "198.51.100.25",
+      "expiresAt": "2026-10-14T08:51:02.942Z",
+      "evidenceAlertIds": [
+        "ex-06"
+      ]
+    },
+    {
+      "moduleKey": "exfiltration",
+      "action": "deny",
+      "sourceAddress": "203.0.113.25",
+      "expiresAt": "2026-10-14T08:51:02.942Z",
+      "evidenceAlertIds": [
+        "ex-07"
+      ]
+    },
+    {
+      "moduleKey": "exfiltration",
+      "action": "deny",
+      "sourceAddress": "192.0.2.26",
+      "expiresAt": "2026-10-14T08:51:02.942Z",
+      "evidenceAlertIds": [
+        "ex-08"
+      ]
+    },
+    {
+      "moduleKey": "exfiltration",
+      "action": "deny",
+      "sourceAddress": "198.51.100.26",
+      "expiresAt": "2026-10-14T08:51:02.942Z",
+      "evidenceAlertIds": [
+        "ex-09"
+      ]
+    },
+    {
+      "moduleKey": "exfiltration",
+      "action": "deny",
+      "sourceAddress": "203.0.113.26",
+      "expiresAt": "2026-10-14T08:51:02.942Z",
+      "evidenceAlertIds": [
+        "ex-10"
+      ]
+    },
+    {
+      "moduleKey": "privilege",
+      "action": "deny",
+      "sourceAddress": "203.0.113.11",
+      "expiresAt": "2026-10-14T08:49:04.210Z",
+      "evidenceAlertIds": [
+        "pv-01",
+        "pv-02"
+      ]
+    },
+    {
+      "moduleKey": "privilege",
+      "action": "deny",
+      "sourceAddress": "198.51.100.11",
+      "expiresAt": "2026-10-14T08:49:04.210Z",
+      "evidenceAlertIds": [
+        "pv-03"
+      ]
+    },
+    {
+      "moduleKey": "privilege",
+      "action": "deny",
+      "sourceAddress": "192.0.2.11",
+      "expiresAt": "2026-10-14T08:49:04.210Z",
+      "evidenceAlertIds": [
+        "pv-04"
+      ]
+    },
+    {
+      "moduleKey": "privilege",
+      "action": "deny",
+      "sourceAddress": "203.0.113.17",
+      "expiresAt": "2026-10-14T08:49:04.210Z",
+      "evidenceAlertIds": [
+        "pv-05"
+      ]
+    },
+    {
+      "moduleKey": "privilege",
+      "action": "deny",
+      "sourceAddress": "198.51.100.17",
+      "expiresAt": "2026-10-14T08:49:04.210Z",
+      "evidenceAlertIds": [
+        "pv-06"
+      ]
+    },
+    {
+      "moduleKey": "privilege",
+      "action": "deny",
+      "sourceAddress": "192.0.2.17",
+      "expiresAt": "2026-10-14T08:49:04.210Z",
+      "evidenceAlertIds": [
+        "pv-07"
+      ]
+    },
+    {
+      "moduleKey": "privilege",
+      "action": "deny",
+      "sourceAddress": "203.0.113.27",
+      "expiresAt": "2026-10-14T08:49:04.210Z",
+      "evidenceAlertIds": [
+        "pv-08"
+      ]
+    },
+    {
+      "moduleKey": "privilege",
+      "action": "deny",
+      "sourceAddress": "198.51.100.27",
+      "expiresAt": "2026-10-14T08:49:04.210Z",
+      "evidenceAlertIds": [
+        "pv-09"
+      ]
+    },
+    {
+      "moduleKey": "persistence",
+      "action": "deny",
+      "sourceAddress": "203.0.113.12",
+      "expiresAt": "2026-10-14T08:49:04.042Z",
+      "evidenceAlertIds": [
+        "ps-01",
+        "ps-02"
+      ]
+    },
+    {
+      "moduleKey": "persistence",
+      "action": "deny",
+      "sourceAddress": "198.51.100.12",
+      "expiresAt": "2026-10-14T08:49:04.042Z",
+      "evidenceAlertIds": [
+        "ps-03"
+      ]
+    },
+    {
+      "moduleKey": "persistence",
+      "action": "deny",
+      "sourceAddress": "192.0.2.12",
+      "expiresAt": "2026-10-14T08:49:04.042Z",
+      "evidenceAlertIds": [
+        "ps-04"
+      ]
+    },
+    {
+      "moduleKey": "persistence",
+      "action": "deny",
+      "sourceAddress": "203.0.113.19",
+      "expiresAt": "2026-10-14T08:49:04.042Z",
+      "evidenceAlertIds": [
+        "ps-05"
+      ]
+    },
+    {
+      "moduleKey": "persistence",
+      "action": "deny",
+      "sourceAddress": "198.51.100.19",
+      "expiresAt": "2026-10-14T08:49:04.042Z",
+      "evidenceAlertIds": [
+        "ps-06"
+      ]
+    },
+    {
+      "moduleKey": "persistence",
+      "action": "deny",
+      "sourceAddress": "192.0.2.19",
+      "expiresAt": "2026-10-14T08:49:04.042Z",
+      "evidenceAlertIds": [
+        "ps-07"
+      ]
+    },
+    {
+      "moduleKey": "persistence",
+      "action": "deny",
+      "sourceAddress": "203.0.113.33",
+      "expiresAt": "2026-10-14T08:49:04.042Z",
+      "evidenceAlertIds": [
+        "ps-08"
+      ]
     }
   ]
 }

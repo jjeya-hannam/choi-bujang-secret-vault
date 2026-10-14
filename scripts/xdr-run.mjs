@@ -59,6 +59,15 @@ export async function runXdr({ root, moduleKey, writeError = (line) => console.e
   if (moduleKey === 'brute-force' || moduleKey === 'web-injection') {
     await integrateDecisions({ root, moduleKey, fixture, result });
   }
+  if (moduleKey === 'known-cve') {
+    const { respondKnownCve } = await import(pathToFileURL(join(root, 'xdr', moduleKey, 'respond.mjs')).href);
+    await respondKnownCve({ root, fixture, result });
+  }
+  const responders = { persistence: 'respondPersistence', privilege: 'respondPrivilege', exfiltration: 'respondExfiltration' };
+  if (responders[moduleKey]) {
+    const response = await import(pathToFileURL(join(root, 'xdr', moduleKey, 'respond.mjs')).href);
+    await response[responders[moduleKey]]({ root, fixture, result });
+  }
   return result;
 }
 

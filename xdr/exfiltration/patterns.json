@@ -1,0 +1,65 @@
+{
+  "schema": "aleph.xdr.patterns.v1",
+  "moduleKey": "exfiltration",
+  "checkedAt": "2026-10-14",
+  "sources": [
+    "https://attack.mitre.org/techniques/T1041/",
+    "https://attack.mitre.org/techniques/T1048/"
+  ],
+  "policyScope": "가상 경보의 의미 상관분석. 전송 통로를 다루는 T1041/T1048보다 넓은 목적지·시간·규모 조합은 학생의 로컬 연습 정책이다. 수치와 신뢰도는 MITRE 표준 임계값 또는 실제 운영 기준이 아니다.",
+  "thresholds": {
+    "block": 0.85,
+    "alert": 0.5,
+    "largeBytes": 50000000,
+    "bulkFiles": 50,
+    "repeatCount": 5,
+    "highSeverity": 9
+  },
+  "patterns": [
+    {
+      "name": "whole_collection_external_transfer",
+      "condition": "외부 전송 완료·양수 전송량·목적지가 확인되고 높은 경보 수준에서 자료 전체 복사와 대용량이 함께 나타남",
+      "evidence": "T1041은 명령 제어 통로로 자료를 내보내는 행위를 설명한다. 전체 자료 전송과 외부 통로는 별도 상관 신호다."
+    },
+    {
+      "name": "novel_destination_bulk_transfer",
+      "condition": "처음 보는 목적지로 다수 파일과 큰 전송량이 함께 완료되고 경보 수준이 높음",
+      "evidence": "T1048은 기존 명령 통로와 다른 프로토콜을 이용한 자료 유출을 설명한다. 목적지 변화만으로는 자동차단하지 않는다."
+    },
+    {
+      "name": "unusual_protocol_bulk_transfer",
+      "condition": "평소와 다른 포트/프로토콜과 다수 파일·큰 전송량·완료 증거가 함께 있음",
+      "evidence": "T1048의 대체 프로토콜과 유출 행위를 근거로 통로 변화와 전송 규모를 함께 본다."
+    },
+    {
+      "name": "repeated_command_channel_transfer",
+      "condition": "명령 제어 통로에서 대용량 전송이 반복되며 완료 증거와 높은 경보 수준이 있음",
+      "evidence": "T1041은 기존 C2 통로에 실린 자료 유출을 설명한다. 반복과 전송량을 함께 확인한다."
+    },
+    {
+      "name": "novel_destination_archive_transfer",
+      "condition": "새 목적지의 압축 자료 대용량 전송에 비업무 시각·복수 파일·반복 중 하나가 추가됨",
+      "evidence": "T1041/T1048은 통로를 통한 자료 이동을 설명한다. 단일 압축 생성 또는 전송 준비를 완료된 유출로 취급하지 않는다."
+    },
+    {
+      "name": "off_hours_repeated_transfer",
+      "condition": "업무/수업 시간 밖의 반복 대용량 전송이 완료됐고 경보 수준이 높음",
+      "evidence": "T1048을 참고해 전송 통로와 반복 활동을 대조한다. 시각 하나만으로 차단하지 않는다."
+    },
+    {
+      "name": "repeated_high_volume_transfer",
+      "condition": "T1041/T1048 태그가 있는 반복 대용량 전송의 완료 증거와 높은 경보 수준이 있음",
+      "evidence": "T1041의 유출 통로 신호와 반복·규모를 상관분석한다. 태그와 bytes 어느 하나만으로 차단하지 않는다."
+    },
+    {
+      "name": "transfer_anomaly_review",
+      "condition": "새 주소·작은 전송·기준선 변화·명령 통로 등 의심 신호가 있으나 복합 차단 증거가 부족함",
+      "evidence": "T1041/T1048 분류는 조사 근거이며 정답 표식이 아니다. 완료된 유출의 복합 증거가 부족하면 0.65 alert로 검토를 유지한다."
+    },
+    {
+      "name": "incomplete_transfer_review",
+      "condition": "압축 준비만 있거나 전송 실패·외부 전송 없음으로 완료 증거가 부족함",
+      "evidence": "MITRE 유출 기법은 자료가 통로로 전달되는 행위를 다룬다. 미완료 사건을 성공한 유출로 단정하지 않는다."
+    }
+  ]
+}

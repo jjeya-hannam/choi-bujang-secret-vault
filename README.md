@@ -156,3 +156,29 @@ known-cve 모듈은 CVE-2021-44228 형태의 JNDI 원격 조회와 확인된 점
 2026-10-14 저장점용으로 `npm run xdr:run -- known-cve`를 실제 재실행했습니다. xdr/known-cve/result.json에는 가상 사건24개, block8·alert8·record8이 기록됐고 정상 사건8개는 모두 record(정상 차단0)입니다. 원본 fixture는 변경하지 않았으며 실제 심판 승인이나 운영 공격 차단의 증거로 주장하지 않습니다. 중단된 다른 작업과 기존 자료실 설정은 보존합니다.
 
 다시 확인하려면 `npm run xdr:run -- known-cve`를 실행하고 result.json의 counts를 읽습니다. 경보 읽기 확인은 `node xdr/known-cve/read-alerts.mjs`, 독립 검사 명령은 `node --test test/known-cve-read-alerts.test.mjs test/known-cve-decide.test.mjs`입니다. 저장점에는 known-cve 읽기·패턴·판정·결과, 관련 검사 두 파일과 이 단계 기록만 포함합니다. 배포·심판 제출은 이번 요청에서 실행하지 않습니다.
+
+### XDR-03 완성도 보완 검토 저장점
+
+실제 심판 커밋0965a67545ee는 조건4개 통과·완결성가점2개·완성도90/100이며 작전 점수120점을 모두 받았습니다. 화면은 이미 성공한 작전의 재제출을 막고 있고, 누락된 가점 이름은 공개하지 않습니다. 제작4의 respond.mjs와 실행 연결이 빠져 있던 것을 확인해 보완했습니다. 이 누락이 감점의 직접 원인이었다거나 수정본이 완성도100으로 재판정됐다는 주장은 하지 않습니다.
+
+known-cve/respond.mjs는 수업용 문서 주소의 판정 결과만 받아 block 후보를 만료 시각·근거 경보 번호가 있는 xdr/deny-rules.json에 연결하고, block과 alert만 xdr/alerts.log에 한 줄씩 기록합니다. record 이벤트·정상으로 표시된 주소·다른 비차단 이벤트와 공유되는 주소는 주소 거부 규칙에서 제외합니다. 입력의 계정·설명·요청 본문·토큰을 저장하지 않습니다. 기존 다른 모듈의 규칙과 로그는 만료 여부와 관계없이 보존합니다. 같은 활성 규칙의 재실행은 만료 시간을 연장하지 않고 로그도 중복하지 않습니다.
+
+실제 로컬 재실행은 `npm run xdr:run -- known-cve`입니다. 결과24건은 block8·alert8·record8, 신규known-cve 주소 거부7개·경보16줄, 정상8건의 합성 게이트웨이 거부0건입니다. 기존 타모듈 규칙16개를 보존했습니다. 실제 운영 사용자 접속이나 서버 게이트웨이 집행 시험은 아닙니다. 거부 확인은 기존 xdr/ztna-overlay.mjs의 신뢰된 게이트웨이 주소 확인 함수를 사용하며, SDP 입력 계약이나 src/decider.mjs의 기존 규칙을 변경하지 않습니다.
+
+known-cve/decide.mjs는 이전과 동일하게 외부 의존성·입출력 없는 단독 판단 함수입니다. IO와 연결은 respond.mjs에만 있고, runner는 known-cve 분기에서만 이 연결을 호출합니다. 관련 검사 `node --test test/known-cve-respond.test.mjs test/known-cve-decide.test.mjs test/xdr-run.test.mjs` 14개가 통과했습니다. 입력과 기존 기록을 먼저 검증하고 새 로그를 반영한 후 거부 규칙을 활성화합니다. 두 파일 전체에 대한 단일 트랜잭션은 아니므로 중단 시 로그만 먼저 남을 수 있지만 새 근거 없는 거부 규칙은 활성화하지 않습니다.
+
+이번 검토본은 최종 승인 전 로컬 결과입니다. GitHub 반영이나 재제출을 하지 않았으며, 플랫폼에서 완성도 재평가를 열어 주어야 실제100 판정을 확인할 수 있습니다.
+
+### Node.js 웹 재사용 연결 검토
+
+xdr/shared/request-guard.mjs는 서버가 제공하는 출발 주소 확인·애플리케이션별 규칙 조회·시각 provider로 기존 XDR 거부 확인 함수를 연결합니다. IPv4/IPv6와 mapped 주소를 정규화하며, 읽기가 끝난 실제 평가 시각으로 만료를 확인합니다. 잘못된 정책이나 provider 실패는 unavailable이고 허용으로 전환하지 않습니다. pass는 XDR 검사 결과이며 기존 인증·기기·소유권 허용을 대신하지 않습니다. 새 표적 검사6개가 통과했고 기존 판정기와 시험 경보 생산기의 제한은 유지했습니다.
+
+다른 웹에 적용할 때의 호스트 연결 계약과 운영 수집·저장소의 미구현 경계는 xdr/INTEGRATION.md를 참고합니다. 현재는 Node.js 서버용 재사용 인터페이스이며 실제 다른 웹에 배포·연결했다는 증거는 없습니다. 심판 완성도100의 재판정도 미확인입니다.
+
+### 남은 XDR 보너스 구현 검토본
+
+`persistence`, `privilege`, `exfiltration`에 근거 패턴, 단독 판정 함수, 비밀값을 가리는 확인용 reader와 응답 처리를 추가했습니다. 기존 자료실 보호 함수와 원본 경보는 변경하지 않았습니다. 응답 처리는 공통 `xdr/shared/respond-fixture.mjs`를 재사용하고, 실행기는 세 모듈을 순차 실행할 때 다른 모듈의 규칙과 이력을 보존합니다. 정상·검토 이벤트와 주소를 공유하는 block은 IP 거부 규칙으로 확대하지 않습니다. 각 규칙은 문서용 주소, 근거 경보 ID와 1시간 만료만 가지며 판정 이유는 패턴 이름으로 제한합니다.
+
+다시 확인할 때는 `npm run xdr:run -- persistence`, `npm run xdr:run -- privilege`, `npm run xdr:run -- exfiltration`을 차례로 실행합니다. 판단 함수는 공격 신호가 명확하면 block, 모호하면 alert, 정상은 record로 분류합니다. 원본 설명과 MITRE 태그는 수업 경보의 맥락이며 실제 승인을 검증한 서버 기록을 대신하지 않습니다. 다른 웹 재사용과 운영 연결에 필요한 경계는 `xdr/INTEGRATION.md`에 기록했습니다. 실제 다른 웹 배포와 보너스 심판 제출·점수 확인은 아직 하지 않았습니다.
+
+최종 로컬 실행 결과는 persistence 24건(block8·alert8·record8), privilege 26건(block9·alert8·record9), exfiltration 30건(block10·alert10·record10)입니다. 낮은 수준의 정상 의미 경보 27건은 차단0이며, 별도 합성 시험에서 승인된 백업·관리 작업, 부정·미완료 표현, 단일 신호만 있는 이벤트를 확인했습니다. 원본 경보 해시와 기존 모듈 규칙·로그 보존을 대조했습니다. 이는 로컬 가상 경보 결과이며 실제 심판 점수나 운영 차단 증거가 아닙니다.
