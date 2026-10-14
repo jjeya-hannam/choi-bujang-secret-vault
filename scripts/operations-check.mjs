@@ -188,13 +188,18 @@ export async function writeOperationsReport(path, report) {
   const agentArchive = resolve(WORKSPACE, 'work/agents/stage12/stage8_review') + sep;
   if (!(target === defaultOutput || target.startsWith(deliverable) || target.startsWith(agentArchive))
       || !target.endsWith('.json')) throw new Error('invalid_operations_output');
-  const normalized = buildOperationsReport(report);
+  if (!report || typeof report !== 'object' || Array.isArray(report)) throw new Error('invalid_operations_report');
+  // Snapshot metadata is a computed API projection. Keep the stored evidence
+  // input separate so the strict projector can read it again on the next run.
+  const { policySnapshot: ignoredSnapshot, ...evidence } = report;
+  const normalized = buildOperationsReport(evidence);
   if (normalized.summary.availability !== 'available') throw new Error('invalid_operations_report');
+  const { policySnapshot: computedSnapshot, ...storedEvidence } = normalized;
   await mkdir(dirname(target), { recursive: true });
   if (await realpath(dirname(target)) !== dirname(target)) throw new Error('invalid_operations_output');
   const temporary = `${target}.${randomUUID()}.tmp`;
   try {
-    await writeFile(temporary, `${JSON.stringify(normalized, null, 2)}\n`, { flag: 'wx' });
+    await writeFile(temporary, `${JSON.stringify(storedEvidence, null, 2)}\n`, { flag: 'wx' });
     await rename(temporary, target);
   } finally { await unlink(temporary).catch(() => {}); }
 }

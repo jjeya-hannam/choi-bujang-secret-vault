@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { runOperationsChecks, trustedBase, writeOperationsReport } from '../scripts/operations-check.mjs';
+import { buildOperationsReport } from '../src/operations-report.mjs';
+import { createOperationsHandler } from '../api/operations.js';
+import policyManifest from '../policy-backups/stage9/manifest.json' with { type: 'json' };
 
 test('실제 로컬 exported API 검사는 정상 소유자와 타인 거부를 기록하고 41종 실행으로 집계하지 않는다', async () => {
   const report = await runOperationsChecks({ includeLive: false, checkedCommit: 'a'.repeat(40) });
@@ -49,4 +55,29 @@ test('네트워크 실패와 예상과 다른 상태는 성공으로 바꾸지 �
 test('외부 기본 URL과 workspace 밖 결과 파일을 거부한다', async () => {
   assert.throws(() => trustedBase('https://other.vercel.app'), /untrusted_operations_base/u);
   await assert.rejects(writeOperationsReport('/tmp/operations.json', {}), /invalid_operations_output/u);
+});
+
+test('생성→파일 저장→실제 API projection은 computed snapshot을 evidence와 분리해 available을 유지한다', async t => {
+  const archive = resolve(dirname(fileURLToPath(import.meta.url)), '../../agents/stage12/stage8_review');
+  await mkdir(archive, { recursive: true });
+  const dir = await mkdtemp(join(archive, 'roundtrip-test-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const generated = await runOperationsChecks({ includeLive: false, checkedCommit: 'd'.repeat(40) });
+  assert.equal(Object.hasOwn(generated, 'policySnapshot'), true);
+  const path = join(dir, 'evidence.json');
+  await writeOperationsReport(path, generated);
+  const stored = JSON.parse(await readFile(path, 'utf8'));
+  assert.equal(Object.hasOwn(stored, 'policySnapshot'), false);
+  const projected = buildOperationsReport(stored, policyManifest);
+  assert.equal(projected.summary.availability, 'available');
+  assert.equal(projected.policySnapshot.availability, 'available');
+  assert.deepEqual(projected.checks, generated.checks);
+  assert.deepEqual(projected.campaign, generated.campaign);
+  assert.equal(projected.checkedCommit, generated.checkedCommit);
+  const res = { setHeader() {}, status(code) { this.statusCode = code; return this; }, json(value) { this.body = value; return this; } };
+  await createOperationsHandler(() => stored, 'd'.repeat(40), () => policyManifest)({ method: 'GET' }, res);
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.summary.availability, 'available');
+  assert.deepEqual(res.body.checks, generated.checks);
+  assert.equal(res.body.policySnapshot.availability, 'available');
 });

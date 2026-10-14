@@ -1,135 +1,164 @@
-// The student changes this check as each stage adds an attack to the same app.
-// Never return tokens, private keys, real names, or note bodies.
-import { decide } from './decider.mjs';
-import { detect } from './detect.mjs';
-import { fixtureRequests } from '../scripts/fixture-7.mjs';
+// Self-contained HTTP checker for the operator's isolated bundle runner.
+// No imports, local fixtures, credentials, note content or identity values.
+const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+const allowedKeys = (value, keys) => object(value) && Object.keys(value).every(key => keys.includes(key));
+const sha = value => typeof value === 'string' && /^[0-9a-f]{40}$/u.test(value);
+const iso = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/u.test(value)
+  && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().replace('.000Z', 'Z') === value.replace('.000Z', 'Z');
+const fixedCode = value => value === null || (typeof value === 'string'
+  && /^(?:HTTP_[1-5]\d{2}|allow|deny|step_up|observe|propose_revocation|LOCAL_TESTS_PASSED|SQL_ASSERTIONS_PASSED|JUDGE_SCORE_100)$/u.test(value));
+const sources = ['live_http', 'local_api', 'local_decider', 'local_sql', 'judge', 'not_run'];
+const statuses = ['passed', 'failed', 'not_run', 'historical', 'unavailable'];
+const categories = ['api', 'policy', 'detection', 'revocation', 'recovery', 'device'];
+
+function trustedBase(config) {
+  if (!Number.isSafeInteger(config?.step) || config.step < 1 || config.step > 12
+      || typeof config.publicAppUrl !== 'string' || config.publicAppUrl !== config.publicAppUrl.trim()) {
+    throw new Error('invalid_check_configuration');
+  }
+  let url;
+  try { url = new URL(config.publicAppUrl); } catch { throw new Error('invalid_check_configuration'); }
+  if (url.protocol !== 'https:' || url.username || url.password || url.port || url.search || url.hash || url.pathname !== '/'
+      || ![url.origin, url.origin + '/'].includes(config.publicAppUrl)
+      || !/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.vercel\.app$/u.test(url.hostname)) {
+    throw new Error('invalid_check_configuration');
+  }
+  return url;
+}
+
+async function get(base, path) {
+  try {
+    const response = await fetch(new URL(path, base), {
+      method: 'GET', cache: 'no-store', redirect: 'error', credentials: 'omit',
+      headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(10000),
+    });
+    const status = Number.isSafeInteger(response.status) && response.status >= 100 && response.status <= 599 ? response.status : 0;
+    let data = null;
+    if (/(?:application\/json|application\/manifest\+json)/iu.test(response.headers.get('content-type') ?? '')) {
+      try { data = await response.json(); } catch { /* Malformed JSON is recorded as a failed check. */ }
+    }
+    return { status, data, unavailable: false };
+  } catch { return { status: 0, data: null, unavailable: true }; }
+}
+
+function result(response, passed) {
+  return response.unavailable ? '실제 HTTP 확인 불가; network_unavailable'
+    : '실제 HTTP ' + response.status + '; result=' + (passed ? 'passed' : 'failed');
+}
+
+function operationsShape(data) {
+  if (!allowedKeys(data, ['schema', 'checkedCommit', 'deployedCommit', 'generatedAt', 'engineOrigin', 'rules',
+    'summary', 'checks', 'campaign', 'policySnapshot']) || data.schema !== 'aleph.operations.v1'
+      || !(data.checkedCommit === null || sha(data.checkedCommit))
+      || !(data.deployedCommit === null || sha(data.deployedCommit))
+      || !(data.generatedAt === null || iso(data.generatedAt))
+      || data.engineOrigin !== 'ALEPH SDP engine' || !Array.isArray(data.rules) || data.rules.length > 80
+      || data.rules.some(rule => typeof rule !== 'string' || !/^[a-z][a-z0-9_.-]{0,79}$/u.test(rule))
+      || new Set(data.rules).size !== data.rules.length
+      || !allowedKeys(data.summary, ['availability', 'liveApi', 'detection', 'revocation', 'recovery'])
+      || !['available', 'unavailable'].includes(data.summary.availability)
+      || ['liveApi', 'detection', 'revocation', 'recovery'].some(key => !['confirmed', 'not_run'].includes(data.summary[key]))
+      || !Array.isArray(data.checks) || data.checks.length > 200
+      || !allowedKeys(data.campaign, ['total', 'executed', 'notRun', 'coverageBasis'])
+      || data.campaign.total !== 41 || data.campaign.executed !== 0 || data.campaign.notRun !== 41
+      || data.campaign.coverageBasis !== 'official_campaign_results_not_available'
+      || !allowedKeys(data.policySnapshot, ['availability', 'scope', 'source', 'version', 'commit', 'fileCount', 'verification'])
+      || !['available', 'unavailable'].includes(data.policySnapshot.availability)
+      || data.policySnapshot.scope !== 'policy_code_snapshot' || data.policySnapshot.source !== 'policy-backups/stage9/manifest.json'
+      || data.policySnapshot.verification !== 'manifest_metadata_only') return false;
+  const snapshot = data.policySnapshot;
+  if (snapshot.availability === 'available') {
+    if (!sha(snapshot.commit) || snapshot.version !== 'stage9-' + snapshot.commit.slice(0, 7) || snapshot.fileCount !== 4) return false;
+  } else if (snapshot.commit !== null || snapshot.version !== null || snapshot.fileCount !== 0) return false;
+  const ids = new Set();
+  for (const row of data.checks) {
+    if (!allowedKeys(row, ['id', 'stage', 'kind', 'category', 'expected', 'actual', 'requestId', 'checkedAt', 'source', 'status'])
+        || typeof row.id !== 'string' || !/^[A-Za-z][A-Za-z0-9_-]{0,63}$/u.test(row.id) || ids.has(row.id)
+        || !Number.isSafeInteger(row.stage) || row.stage < 1 || row.stage > 12
+        || !['normal', 'forbidden', 'attack'].includes(row.kind) || !categories.includes(row.category)
+        || !fixedCode(row.expected) || !fixedCode(row.actual)
+        || !(row.requestId === null || (typeof row.requestId === 'string' && /^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$/u.test(row.requestId)))
+        || !(row.checkedAt === null || iso(row.checkedAt)) || !sources.includes(row.source) || !statuses.includes(row.status)) return false;
+    if (['not_run', 'unavailable'].includes(row.status)) {
+      if (row.source !== 'not_run' || row.actual !== null || row.requestId !== null || row.checkedAt !== null) return false;
+    } else if (row.status === 'historical') {
+      if (row.source !== 'judge' || row.actual === null) return false;
+    } else if (row.source === 'not_run' || row.expected === null || row.actual === null || row.checkedAt === null
+        || (row.status === 'passed' && row.expected !== row.actual) || (row.status === 'failed' && row.expected === row.actual)) return false;
+    ids.add(row.id);
+  }
+  for (const [field, category] of [['liveApi', 'api'], ['detection', 'detection'], ['revocation', 'revocation'], ['recovery', 'recovery']]) {
+    const confirmed = data.checks.some(row => row.category === category && row.status === 'passed' && ['live_http', 'judge'].includes(row.source));
+    if (data.summary[field] !== (confirmed ? 'confirmed' : 'not_run')) return false;
+  }
+  return true;
+}
 
 export async function runAttackChecks(config) {
-  if (config.step >= 3) {
-    const base = new URL(config.publicAppUrl);
-    const response = await fetch(new URL('/api/notes', base), {
-      redirect: 'error', signal: AbortSignal.timeout(10000),
-    });
-    const type = response.headers.get('content-type') ?? '';
-    let error = null;
-    if (type.includes('application/json')) {
-      try { error = (await response.json()).error; } catch { /* recorded below */ }
-    }
-    const attempts = [{ attackId: 'anonymous_note_read', expected: '비로그인 API 401 또는 403 JSON 거부',
-      observed: `HTTP ${response.status}, JSON 오류 ${typeof error === 'string' ? error : '없음'}` }];
-    if (config.step >= 6) {
-      const { normal } = fixtureRequests();
-      for (const [attackId, deviceRegistered, expected] of [
-        ['local_registered_device', true, '로컬 가상 요청: 등록 기기 allow'],
-        ['local_unregistered_device', false, '로컬 가상 요청: 미등록 기기 deny/device_not_registered'],
-        ['local_unconfirmed_device', null, '로컬 가상 요청: 미확인 기기 deny/device_not_registered'],
-      ]) {
-        const result = await decide({ ...normal, deviceRegistered });
-        attempts.push({ attackId, expected,
-          observed: `로컬 판정기 직접 실행: ${result.decision}/${result.reasonCode}; 운영 엔진 및 심판 판정 아님` });
-      }
-    }
-    if (config.step >= 7) {
-      const { normal, suspicious } = fixtureRequests();
-      for (const [attackId, request, expected] of [
-        ['local_normal_signals', normal, '로컬 가상 정상 사건 allow'],
-        ['local_composite_risk', suspicious, '로컬 가상 복합 사건 step_up/step_up_required'],
-        ['local_verified_risk', { ...suspicious, stepUp: { verified: true, authAgeSeconds: 60 } }, '로컬 가상 재확인 사건 allow'],
-      ]) {
-        const result = await decide(request);
-        attempts.push({ attackId, expected,
-          observed: `로컬 판정기 직접 실행: ${result.decision}/${result.reasonCode}; 실제 접속·재로그인·심판 판정 아님` });
-      }
-      attempts.push({ attackId: 'live_step_up_verification', expected: '실제 계약이 제공될 때 재로그인 확인 요청·응답 검증',
-        observed: '미실행: 현재 계약에 실제 재로그인 확인 호출이 없음. 가상 요청 시험만 실행함' });
-    }
-    if (config.step >= 8) {
-      const { normal } = fixtureRequests();
-      const id = '11111111-1111-4111-8111-111111111111';
-      for (const [attackId, request, expected] of [
-        ['local_collection_read', { ...normal, path: '/api/notes', route: 'GET /api/notes' }, '판정기 메모 전체 목록 GET deny'],
-        ['local_engine_collection_read', { ...normal, path: '/notes', route: 'GET /notes' }, '판정기 정규화 목록 GET deny'],
-        ['local_note_api_admission', { ...normal, path: `/api/notes/${id}`, route: 'GET /api/notes/:id' }, '정확 UUID 경로의 API 진입 allow; 최종 소유 권한은 API에서 검증'],
-        ['local_note_engine_admission', { ...normal, path: `/notes/${id}`, route: 'GET /notes/:id' }, '정규화된 엔진 UUID 경로의 API 진입 allow; 최종 소유 권한은 API에서 검증'],
-        ['local_other_subject', { ...normal, subjectId: 'other_fixture' }, '가상 본인 메모를 다른 주체가 요청하면 deny'],
-        ['local_owner_no_risk_source', { ...normal, signals: { source: 'none', region: 'unknown', network: 'unknown', hour: 14 } }, '등록된 가상 소유자의 자원은 위험 신호 출처와 관계없이 allow'],
-        ['local_export_alias', { ...normal, path: '/api/notes/export', route: 'GET /api/notes/:id' }, '로컬 가상 export 별칭 deny'],
-        ['local_announcement_edit', { ...normal, method: 'PUT', path: `/api/announcements/${id}`, route: 'PUT /api/announcements/:id' }, '로컬 가상 강사 권한 없는 공지 수정 deny'],
-      ]) {
-        const result = await decide(request);
-        attempts.push({ attackId, expected, observed: `로컬 판정기 직접 실행: ${result.decision}/${result.reasonCode}; 실제 API 계정·심판 판정 아님` });
-      }
-      attempts.push({ attackId: 'live_resource_accounts', expected: '실제 A 자기 메모 허용·B 타인 메모 거부·학생 공지 수정 거부',
-        observed: '미실행: 실제 계정 요청은 보내지 않음. 별도 가상 API 시험으로 소유자·권한 거부를 검증함' });
-    }
-    if (config.step >= 9) {
-      for (const [count, expected] of [[120, 'observe'], [121, 'propose_revocation/burst_read']]) {
-        const events = Array.from({ length: count }, (_, i) => ({
-          at: new Date(Date.UTC(2026, 9, 1) + i * 2000).toISOString(),
-          method: 'GET', identity: { sub: 'learner_fixture' },
-        }));
-        const result = detect(events);
-        attempts.push({ attackId: `local_detection_${count}`, expected: `로컬 가상 조회 ${count}건 ${expected}`,
-          observed: `탐지 함수 직접 실행: ${result.action}${result.reasonCode ? '/' + result.reasonCode : ''}; 실제 회수·시간·심판 판정 아님` });
-      }
-      attempts.push({ attackId: 'live_detection_revocation', expected: '심판의 가상 사건으로 복합 탐지·단일 기기 회수·시간 확인',
-        observed: '미실행: 공개 연습 계약에는 네트워크·기기가 없음. 실제 회수 및 경과 시간은 심판에서 확인 필요' });
-    }
-    if (config.step >= 10) {
-      const redundant = new Set(['local_owner_no_risk_source', 'local_other_subject', 'live_step_up_verification']);
-      for (let i = attempts.length - 1; i >= 0; i--) if (redundant.has(attempts[i].attackId)) attempts.splice(i, 1);
-      const { loadVerifiedSnapshot } = await import('../scripts/policy-recovery.mjs');
-      const snapshot = await loadVerifiedSnapshot();
-      attempts.push({ attackId: 'local_policy_snapshot', expected: '안전 정책 소스4개 및 SHA256 검증',
-        observed: `로컬 사본 검증: ${snapshot.version}, ${snapshot.files.length}개 파일 통과; 운영 정책 복구 아님` });
-      const { createRestoreHandler } = await import('./restore-api.mjs');
-      const res = { statusCode: 0, setHeader() {}, status(code) { this.statusCode = code; return this; }, json() { return this; } };
-      await createRestoreHandler(() => ({ verify: async () => null }))({ method: 'POST', url: '/api/restore', headers: {}, body: {} }, res);
-      attempts.push({ attackId: 'local_restore_anonymous', expected: '비인증 복구는 401',
-        observed: `실제 API 함수+가상 비인증 실행: HTTP ${res.statusCode}; 운영 HTTP 시험 아님` });
-      attempts.push({ attackId: 'live_restore', expected: '운영 심판 B 사전백업·변조/삭제 복구·재공격 차단',
-        observed: '미실행: 운영 DB SQL 복구 검증은 통과. 실제 HTTP 복구와 심판 결과는 배포 후 별도 확인' });
-    }
-    if (config.step >= 11) {
-      const redundant = new Set(['local_registered_device', 'local_unconfirmed_device', 'local_restore_anonymous']);
-      for (let i = attempts.length - 1; i >= 0; i--) if (redundant.has(attempts[i].attackId)) attempts.splice(i, 1);
-      const manifestResponse = await fetch(new URL('/manifest.webmanifest', base), { cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(10000) });
-      let installable = false;
-      try { const manifest = await manifestResponse.json(); installable = manifest.display === 'standalone' && typeof manifest.name === 'string' && Array.isArray(manifest.icons) && manifest.icons.length >= 2; } catch { /* fail recorded below */ }
-      attempts.push({ attackId: 'live_pwa_manifest', expected: '공개 설치형 manifest와 앱 이름·아이콘', observed: `실제 HTTP ${manifestResponse.status}, manifest ${installable ? '확인' : '확인 실패'}` });
-      const statusResponse = await fetch(new URL('/api/auth', base), { cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(10000) });
-      let signedOut = false;
-      try { const status = await statusResponse.json(); signedOut = status.signedIn === false && status.deviceStatus === 'unrequested'; } catch { /* fail recorded below */ }
-      attempts.push({ attackId: 'live_unsigned_device_status', expected: '익명은 미로그인·미승인 상태', observed: `실제 HTTP ${statusResponse.status}, 비승인 상태 ${signedOut ? '확인' : '확인 실패'}` });
-      attempts.push({ attackId: 'live_approved_student_browser', expected: '실제 승인전 보호자료 차단·승인후 본인자료 허용', observed: '실제 학생 계정 HTTP는 미실행. 로컬 API/브라우저 가상시험과 운영DB rollback 시험으로 대기/승인/회수 확인' });
-    }
-    return attempts;
+  const base = trustedBase(config);
+  if (config.step === 1) {
+    if (typeof config.sampleMarker !== 'string' || !config.sampleMarker) throw new Error('invalid_check_configuration');
+    const response = await get(base, '/data.json');
+    const visible = response.status === 200 && response.data?.sampleMarker === config.sampleMarker
+      && Array.isArray(response.data.notes) && response.data.notes.length > 0;
+    return [{ attackId: 'anonymous_note_read', expected: '비로그인 화면에서 가상 메모를 확인',
+      observed: response.unavailable ? '비로그인 요청 확인 불가; network_unavailable'
+        : visible ? '비로그인 요청에서 공개 가상 메모 확인 표시가 보임'
+          : '비로그인 요청에서 확인 표시가 보이지 않음 (HTTP ' + response.status + ')' }];
   }
-  if (config.step !== 1) throw new Error('이 단계의 공격 점검을 src/attack-check.mjs에 구현해 주세요.');
-  let app;
-  try {
-    app = new URL(config.publicAppUrl);
-  } catch {
-    throw new Error('aleph.config.json의 실제 배포 주소를 먼저 넣어 주세요.');
+  if (config.step === 2) {
+    const response = await get(base, '/data.json');
+    return [{ attackId: 'anonymous_static_notes_removed', expected: '공개 data.json 경로 404',
+      observed: result(response, response.status === 404) }];
   }
-  if (app.protocol !== 'https:' || app.username || app.password || app.search || app.hash
-      || app.pathname !== '/' || app.hostname.endsWith('.example')) {
-    throw new Error('aleph.config.json의 실제 배포 주소를 먼저 넣어 주세요.');
+  const attempts = [];
+  const response = await get(base, '/api/notes');
+  const error = allowedKeys(response.data, ['error']) && ['AUTH_REQUIRED', 'DEVICE_NOT_REGISTERED', 'RESOURCE_FORBIDDEN'].includes(response.data.error)
+    ? response.data.error : 'unexpected_response';
+  attempts.push({ attackId: 'anonymous_note_read', expected: '비로그인 API 401 또는 403 JSON 거부',
+    observed: result(response, [401, 403].includes(response.status) && error !== 'unexpected_response') + '; code=' + error });
+  if (config.step >= 7) attempts.push({ attackId: 'live_step_up_verification', expected: '정상 재확인 요청과 서버 판정 검증',
+    observed: '미실행; not_run. 실제 재로그인 계정 요청을 보내지 않음' });
+  if (config.step >= 8) attempts.push({ attackId: 'live_resource_accounts', expected: '실제 A 본인 메모 허용·B 타인 메모 거부',
+    observed: '미실행; not_run. 인증된 계정의 실제 요청을 보내지 않음; 로컬 회귀는 별도 명령' });
+  if (config.step >= 9) attempts.push({ attackId: 'live_detection_revocation', expected: '운영 탐지·단일 기기 회수·경과 시간 확인',
+    observed: '미실행; not_run. 운영 엔진 탐지·회수 기록과 측정 시간을 확인하지 않음' });
+  if (config.step >= 10) attempts.push({ attackId: 'live_restore', expected: '실제 합성 B 사전 백업과 자기 메모 복구',
+    observed: '미실행; not_run. 실제 HTTP 복구 요청과 DB 변경을 수행하지 않음' });
+  if (config.step >= 11) {
+    const manifest = await get(base, '/manifest.webmanifest');
+    const installable = manifest.status === 200 && manifest.data?.display === 'standalone'
+      && typeof manifest.data.name === 'string' && manifest.data.name.length > 0
+      && Array.isArray(manifest.data.icons) && manifest.data.icons.length >= 2;
+    attempts.push({ attackId: 'live_pwa_manifest', expected: '공개 설치형 manifest 이름·아이콘·standalone 확인',
+      observed: result(manifest, installable) });
+    const auth = await get(base, '/api/auth');
+    const signedOut = auth.status === 200 && allowedKeys(auth.data, ['signedIn', 'deviceStatus'])
+      && auth.data.signedIn === false && auth.data.deviceStatus === 'unrequested';
+    attempts.push({ attackId: 'live_unsigned_device_status', expected: '익명은 미로그인·미승인 상태',
+      observed: result(auth, signedOut) });
+    attempts.push({ attackId: 'live_approved_student_browser', expected: '실제 승인 전 차단·승인 후 본인 자료 허용',
+      observed: '미실행; not_run. 실제 학생 계정 생성·기기 승인을 수행하지 않음' });
   }
-  if (typeof config.sampleMarker !== 'string' || !config.sampleMarker) throw new Error('가상 메모의 확인 표시를 넣어 주세요.');
-  const response = await fetch(new URL('/data.json', app), {
-    redirect: 'error', signal: AbortSignal.timeout(10000),
-  });
-  let visible = false;
-  if (response.ok) {
-    try {
-      const data = await response.json();
-      visible = data?.sampleMarker === config.sampleMarker && Array.isArray(data.notes)
-        && data.notes.length > 0;
-    } catch {
-      // A non-JSON response is a failed check, not a successful deployment.
-    }
+  if (config.step >= 12) {
+    const operations = await get(base, '/api/operations');
+    const valid = operationsShape(operations.data);
+    let observed = result(operations, operations.status === 200 && valid && operations.data.summary.availability === 'available');
+    if (valid) {
+      const report = operations.data;
+      const basis = report.checkedCommit === null || report.deployedCommit === null ? 'unknown'
+        : report.checkedCommit === report.deployedCommit ? 'matched' : 'different';
+      observed += '; schema=aleph.operations.v1; basis=' + basis + '; rows=' + report.checks.length
+        + '; passed=' + report.checks.filter(row => row.status === 'passed').length
+        + '; failed=' + report.checks.filter(row => row.status === 'failed').length
+        + '; historical=' + report.checks.filter(row => row.status === 'historical').length
+        + '; not_run=' + report.checks.filter(row => row.status === 'not_run').length
+        + '; availability=' + report.summary.availability;
+    } else observed += '; schema=unavailable';
+    attempts.push({ attackId: 'live_operations_summary', expected: '공개 서버 요약 스키마·실측 기록 수·검사 기준/배포 커밋 구분',
+      observed });
+    attempts.push({ attackId: 'official_campaign_41', expected: '공식 41종 각각의 실제 공격 결과',
+      observed: '미실행; not_run. 항목별 공식 캠페인 결과 없음; 과거 점수·로컬 결과를 실행 수로 합산하지 않음' });
   }
-  return [{ attackId: 'anonymous_note_read', expected: '비로그인 화면에서 가상 메모를 확인',
-    observed: visible ? '비로그인 요청에서 공개 가상 메모 확인 표시가 보임' : `비로그인 요청에서 확인 표시가 보이지 않음 (HTTP ${response.status})` }];
+  return attempts;
 }
