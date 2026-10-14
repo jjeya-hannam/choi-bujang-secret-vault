@@ -42,7 +42,7 @@ async function get(base, path) {
 }
 
 function result(response, passed) {
-  return response.unavailable ? '실제 HTTP 확인 불가; network_unavailable'
+  return response.unavailable ? 'not_run'
     : '실제 HTTP ' + response.status + '; result=' + (passed ? 'passed' : 'failed');
 }
 
@@ -96,13 +96,27 @@ function operationsShape(data) {
 
 export async function runAttackChecks(config) {
   const base = trustedBase(config);
+  // Stage 12 has no confirmed operator contract correlating these IDs to HTTP
+  // receipts. Keep an explicit unexecuted plan; do not send uncorrelated requests.
+  if (config.step === 12) return [
+    ['anonymous_note_read', '비로그인 API 401 또는 403 JSON 거부'],
+    ['live_step_up_verification', '정상 재확인 요청과 서버 판정 검증'],
+    ['live_resource_accounts', '실제 A 본인 메모 허용·B 타인 메모 거부'],
+    ['live_detection_revocation', '운영 탐지·단일 기기 회수·경과 시간 확인'],
+    ['live_restore', '실제 합성 B 사전 백업과 자기 메모 복구'],
+    ['live_pwa_manifest', '공개 설치형 manifest 이름·아이콘·standalone 확인'],
+    ['live_unsigned_device_status', '익명은 미로그인·미승인 상태'],
+    ['live_approved_student_browser', '실제 승인 전 차단·승인 후 본인 자료 허용'],
+    ['live_operations_summary', '공개 서버 요약 스키마·실측 기록 수·검사 기준/배포 커밋 구분'],
+    ['official_campaign_41', '공식 41종 각각의 실제 공격 결과'],
+  ].map(([attackId, expected]) => ({ attackId, expected, observed: 'not_run' }));
   if (config.step === 1) {
     if (typeof config.sampleMarker !== 'string' || !config.sampleMarker) throw new Error('invalid_check_configuration');
     const response = await get(base, '/data.json');
     const visible = response.status === 200 && response.data?.sampleMarker === config.sampleMarker
       && Array.isArray(response.data.notes) && response.data.notes.length > 0;
     return [{ attackId: 'anonymous_note_read', expected: '비로그인 화면에서 가상 메모를 확인',
-      observed: response.unavailable ? '비로그인 요청 확인 불가; network_unavailable'
+      observed: response.unavailable ? 'not_run'
         : visible ? '비로그인 요청에서 공개 가상 메모 확인 표시가 보임'
           : '비로그인 요청에서 확인 표시가 보이지 않음 (HTTP ' + response.status + ')' }];
   }
@@ -116,15 +130,16 @@ export async function runAttackChecks(config) {
   const error = allowedKeys(response.data, ['error']) && ['AUTH_REQUIRED', 'DEVICE_NOT_REGISTERED', 'RESOURCE_FORBIDDEN'].includes(response.data.error)
     ? response.data.error : 'unexpected_response';
   attempts.push({ attackId: 'anonymous_note_read', expected: '비로그인 API 401 또는 403 JSON 거부',
-    observed: result(response, [401, 403].includes(response.status) && error !== 'unexpected_response') + '; code=' + error });
+    observed: response.unavailable ? 'not_run'
+      : result(response, [401, 403].includes(response.status) && error !== 'unexpected_response') + '; code=' + error });
   if (config.step >= 7) attempts.push({ attackId: 'live_step_up_verification', expected: '정상 재확인 요청과 서버 판정 검증',
-    observed: '미실행; not_run. 실제 재로그인 계정 요청을 보내지 않음' });
+    observed: 'not_run' });
   if (config.step >= 8) attempts.push({ attackId: 'live_resource_accounts', expected: '실제 A 본인 메모 허용·B 타인 메모 거부',
-    observed: '미실행; not_run. 인증된 계정의 실제 요청을 보내지 않음; 로컬 회귀는 별도 명령' });
+    observed: 'not_run' });
   if (config.step >= 9) attempts.push({ attackId: 'live_detection_revocation', expected: '운영 탐지·단일 기기 회수·경과 시간 확인',
-    observed: '미실행; not_run. 운영 엔진 탐지·회수 기록과 측정 시간을 확인하지 않음' });
+    observed: 'not_run' });
   if (config.step >= 10) attempts.push({ attackId: 'live_restore', expected: '실제 합성 B 사전 백업과 자기 메모 복구',
-    observed: '미실행; not_run. 실제 HTTP 복구 요청과 DB 변경을 수행하지 않음' });
+    observed: 'not_run' });
   if (config.step >= 11) {
     const manifest = await get(base, '/manifest.webmanifest');
     const installable = manifest.status === 200 && manifest.data?.display === 'standalone'
@@ -138,13 +153,13 @@ export async function runAttackChecks(config) {
     attempts.push({ attackId: 'live_unsigned_device_status', expected: '익명은 미로그인·미승인 상태',
       observed: result(auth, signedOut) });
     attempts.push({ attackId: 'live_approved_student_browser', expected: '실제 승인 전 차단·승인 후 본인 자료 허용',
-      observed: '미실행; not_run. 실제 학생 계정 생성·기기 승인을 수행하지 않음' });
+      observed: 'not_run' });
   }
   if (config.step >= 12) {
     const operations = await get(base, '/api/operations');
     const valid = operationsShape(operations.data);
     let observed = result(operations, operations.status === 200 && valid && operations.data.summary.availability === 'available');
-    if (valid) {
+    if (!operations.unavailable && valid) {
       const report = operations.data;
       const basis = report.checkedCommit === null || report.deployedCommit === null ? 'unknown'
         : report.checkedCommit === report.deployedCommit ? 'matched' : 'different';
@@ -154,11 +169,11 @@ export async function runAttackChecks(config) {
         + '; historical=' + report.checks.filter(row => row.status === 'historical').length
         + '; not_run=' + report.checks.filter(row => row.status === 'not_run').length
         + '; availability=' + report.summary.availability;
-    } else observed += '; schema=unavailable';
+    } else if (!operations.unavailable) observed += '; schema=unavailable';
     attempts.push({ attackId: 'live_operations_summary', expected: '공개 서버 요약 스키마·실측 기록 수·검사 기준/배포 커밋 구분',
       observed });
     attempts.push({ attackId: 'official_campaign_41', expected: '공식 41종 각각의 실제 공격 결과',
-      observed: '미실행; not_run. 항목별 공식 캠페인 결과 없음; 과거 점수·로컬 결과를 실행 수로 합산하지 않음' });
+      observed: 'not_run' });
   }
   return attempts;
 }
