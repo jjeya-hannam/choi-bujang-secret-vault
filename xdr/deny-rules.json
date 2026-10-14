@@ -370,7 +370,7 @@
       "moduleKey": "persistence",
       "action": "deny",
       "sourceAddress": "203.0.113.12",
-      "expiresAt": "2026-10-14T08:49:04.042Z",
+      "expiresAt": "2026-10-14T12:19:59.857Z",
       "evidenceAlertIds": [
         "ps-01",
         "ps-02"
@@ -380,7 +380,7 @@
       "moduleKey": "persistence",
       "action": "deny",
       "sourceAddress": "198.51.100.12",
-      "expiresAt": "2026-10-14T08:49:04.042Z",
+      "expiresAt": "2026-10-14T12:19:59.857Z",
       "evidenceAlertIds": [
         "ps-03"
       ]
@@ -389,7 +389,7 @@
       "moduleKey": "persistence",
       "action": "deny",
       "sourceAddress": "192.0.2.12",
-      "expiresAt": "2026-10-14T08:49:04.042Z",
+      "expiresAt": "2026-10-14T12:19:59.857Z",
       "evidenceAlertIds": [
         "ps-04"
       ]
@@ -398,7 +398,7 @@
       "moduleKey": "persistence",
       "action": "deny",
       "sourceAddress": "203.0.113.19",
-      "expiresAt": "2026-10-14T08:49:04.042Z",
+      "expiresAt": "2026-10-14T12:19:59.857Z",
       "evidenceAlertIds": [
         "ps-05"
       ]
@@ -407,7 +407,7 @@
       "moduleKey": "persistence",
       "action": "deny",
       "sourceAddress": "198.51.100.19",
-      "expiresAt": "2026-10-14T08:49:04.042Z",
+      "expiresAt": "2026-10-14T12:19:59.857Z",
       "evidenceAlertIds": [
         "ps-06"
       ]
@@ -416,7 +416,7 @@
       "moduleKey": "persistence",
       "action": "deny",
       "sourceAddress": "192.0.2.19",
-      "expiresAt": "2026-10-14T08:49:04.042Z",
+      "expiresAt": "2026-10-14T12:19:59.857Z",
       "evidenceAlertIds": [
         "ps-07"
       ]
@@ -425,7 +425,7 @@
       "moduleKey": "persistence",
       "action": "deny",
       "sourceAddress": "203.0.113.33",
-      "expiresAt": "2026-10-14T08:49:04.042Z",
+      "expiresAt": "2026-10-14T12:19:59.857Z",
       "evidenceAlertIds": [
         "ps-08"
       ]

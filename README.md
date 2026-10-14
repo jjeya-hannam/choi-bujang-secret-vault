@@ -182,3 +182,7 @@ xdr/shared/request-guard.mjs는 서버가 제공하는 출발 주소 확인·애
 다시 확인할 때는 `npm run xdr:run -- persistence`, `npm run xdr:run -- privilege`, `npm run xdr:run -- exfiltration`을 차례로 실행합니다. 판단 함수는 공격 신호가 명확하면 block, 모호하면 alert, 정상은 record로 분류합니다. 원본 설명과 MITRE 태그는 수업 경보의 맥락이며 실제 승인을 검증한 서버 기록을 대신하지 않습니다. 다른 웹 재사용과 운영 연결에 필요한 경계는 `xdr/INTEGRATION.md`에 기록했습니다. 실제 다른 웹 배포와 보너스 심판 제출·점수 확인은 아직 하지 않았습니다.
 
 최종 로컬 실행 결과는 persistence 24건(block8·alert8·record8), privilege 26건(block9·alert8·record9), exfiltration 30건(block10·alert10·record10)입니다. 낮은 수준의 정상 의미 경보 27건은 차단0이며, 별도 합성 시험에서 승인된 백업·관리 작업, 부정·미완료 표현, 단일 신호만 있는 이벤트를 확인했습니다. 원본 경보 해시와 기존 모듈 규칙·로그 보존을 대조했습니다. 이는 로컬 가상 경보 결과이며 실제 심판 점수나 운영 차단 증거가 아닙니다.
+
+### 보너스 xdr-04 저장점 · 제출 확인
+
+2026-10-14 심판 화면의 「몰래 심어진 프로그램」 제작 1~4와 제출 지시를 구현과 대조했습니다. persistence 가상 경보를 다시 실행한 결과 block8·alert8·record8, 정상 의미8건 차단0입니다. 이 모듈의 만료 규칙만 갱신하며 원본 경보, 기존 자료실 및 다른 모듈의 규칙은 보존했습니다. 실제 심판 결과는 이 로컬 실행 결과와 구분합니다.
