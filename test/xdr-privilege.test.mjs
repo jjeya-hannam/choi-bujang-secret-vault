@@ -40,7 +40,7 @@ test('주소·계정·ID 변경은 결과를 바꾸지 않으며 위험 의미 �
   assert.equal(decide(event('평소 주소에서 관리자 명령이 한 번 실행됐습니다.',5,['T1068'])).action,'alert');
   assert.equal(decide(event('승인된 정기 관리로 관리자 그룹에 추가됐습니다.')).action,'record');
   assert.equal(decide(event('승인된 정기 관리라고 표시됐지만 처음 보는 주소에서 관리자 그룹에 추가됐습니다.')).action,'block');
-  for (const description of ['관리자 그룹에 추가하지 않았다.', '관리자 그룹에 추가되지 않았습니다.', 'administrator group was not added']) {
+  for (const description of ['관리자 그룹에 추가하지 않았다.', '관리자 그룹에 추가되지 않았습니다.', 'administrator group was not added', 'No users were added to administrators group.', 'None of the users were added to administrators group.']) {
     assert.equal(decide(event(description)).action,'alert');
   }
   for (const description of ['unauthorized routine administrator group added', 'unapproved routine administrator group added', 'not authorized routine administrator group added', '승인받지 않은 정기 관리로 관리자 그룹에 추가됐습니다.']) {

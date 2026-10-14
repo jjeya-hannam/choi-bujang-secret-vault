@@ -22,7 +22,7 @@ export function decide(alert) {
   const command = /명령.*실행|권한 명령|command.*execut|execut.*command/iu.test(description);
   const newAdmin = /방금.*관리자|새.*관리자|new(?:ly)?.*admin|recent.*elevat/iu.test(description);
   const unusual = /처음 보는|처음 봅니다|시간 밖|업무.*않|다른 계정.*권한|원격 주소|unfamiliar|unexpected|outside.*hours|another account/iu.test(description);
-  const incomplete = /취소|실패|변경은 없|명령은 없|추가.{0,8}(?:않|없)|변경.{0,8}않|실행.{0,8}(?:않|없)|cancel|failed|no (?:change|command)|(?:not|never)\s+(?:added|changed|executed|elevated)/iu.test(description);
+  const incomplete = /취소|실패|변경은 없|명령은 없|추가.{0,8}(?:않|없)|변경.{0,8}않|실행.{0,8}(?:않|없)|cancel|failed|no (?:change|command)|(?:not|never)\s+(?:added|changed|executed|elevated)|\b(?:no|none)\b[^.!?\n]{0,80}\b(?:added|changed|executed|elevated)\b/iu.test(description);
   const unapproved = /미승인|승인.{0,8}(?:않|없)|\b(?:unauthorized|unapproved)\b|\bnot\s+(?:authorized|approved)\b/iu.test(description);
   const approvedRoutine = !unapproved && /승인된|승인받은|\bauthorized\b|\bapproved\b/iu.test(description)
     && /정기|평소|예약|routine|scheduled|usual/iu.test(description) && !unusual && !newAdmin;

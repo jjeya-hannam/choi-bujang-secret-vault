@@ -294,79 +294,6 @@
       ]
     },
     {
-      "moduleKey": "privilege",
-      "action": "deny",
-      "sourceAddress": "203.0.113.11",
-      "expiresAt": "2026-10-14T08:49:04.210Z",
-      "evidenceAlertIds": [
-        "pv-01",
-        "pv-02"
-      ]
-    },
-    {
-      "moduleKey": "privilege",
-      "action": "deny",
-      "sourceAddress": "198.51.100.11",
-      "expiresAt": "2026-10-14T08:49:04.210Z",
-      "evidenceAlertIds": [
-        "pv-03"
-      ]
-    },
-    {
-      "moduleKey": "privilege",
-      "action": "deny",
-      "sourceAddress": "192.0.2.11",
-      "expiresAt": "2026-10-14T08:49:04.210Z",
-      "evidenceAlertIds": [
-        "pv-04"
-      ]
-    },
-    {
-      "moduleKey": "privilege",
-      "action": "deny",
-      "sourceAddress": "203.0.113.17",
-      "expiresAt": "2026-10-14T08:49:04.210Z",
-      "evidenceAlertIds": [
-        "pv-05"
-      ]
-    },
-    {
-      "moduleKey": "privilege",
-      "action": "deny",
-      "sourceAddress": "198.51.100.17",
-      "expiresAt": "2026-10-14T08:49:04.210Z",
-      "evidenceAlertIds": [
-        "pv-06"
-      ]
-    },
-    {
-      "moduleKey": "privilege",
-      "action": "deny",
-      "sourceAddress": "192.0.2.17",
-      "expiresAt": "2026-10-14T08:49:04.210Z",
-      "evidenceAlertIds": [
-        "pv-07"
-      ]
-    },
-    {
-      "moduleKey": "privilege",
-      "action": "deny",
-      "sourceAddress": "203.0.113.27",
-      "expiresAt": "2026-10-14T08:49:04.210Z",
-      "evidenceAlertIds": [
-        "pv-08"
-      ]
-    },
-    {
-      "moduleKey": "privilege",
-      "action": "deny",
-      "sourceAddress": "198.51.100.27",
-      "expiresAt": "2026-10-14T08:49:04.210Z",
-      "evidenceAlertIds": [
-        "pv-09"
-      ]
-    },
-    {
       "moduleKey": "persistence",
       "action": "deny",
       "sourceAddress": "203.0.113.12",
@@ -428,6 +355,79 @@
       "expiresAt": "2026-10-14T12:19:59.857Z",
       "evidenceAlertIds": [
         "ps-08"
+      ]
+    },
+    {
+      "moduleKey": "privilege",
+      "action": "deny",
+      "sourceAddress": "203.0.113.11",
+      "expiresAt": "2026-10-14T12:26:39.667Z",
+      "evidenceAlertIds": [
+        "pv-01",
+        "pv-02"
+      ]
+    },
+    {
+      "moduleKey": "privilege",
+      "action": "deny",
+      "sourceAddress": "198.51.100.11",
+      "expiresAt": "2026-10-14T12:26:39.667Z",
+      "evidenceAlertIds": [
+        "pv-03"
+      ]
+    },
+    {
+      "moduleKey": "privilege",
+      "action": "deny",
+      "sourceAddress": "192.0.2.11",
+      "expiresAt": "2026-10-14T12:26:39.667Z",
+      "evidenceAlertIds": [
+        "pv-04"
+      ]
+    },
+    {
+      "moduleKey": "privilege",
+      "action": "deny",
+      "sourceAddress": "203.0.113.17",
+      "expiresAt": "2026-10-14T12:26:39.667Z",
+      "evidenceAlertIds": [
+        "pv-05"
+      ]
+    },
+    {
+      "moduleKey": "privilege",
+      "action": "deny",
+      "sourceAddress": "198.51.100.17",
+      "expiresAt": "2026-10-14T12:26:39.667Z",
+      "evidenceAlertIds": [
+        "pv-06"
+      ]
+    },
+    {
+      "moduleKey": "privilege",
+      "action": "deny",
+      "sourceAddress": "192.0.2.17",
+      "expiresAt": "2026-10-14T12:26:39.667Z",
+      "evidenceAlertIds": [
+        "pv-07"
+      ]
+    },
+    {
+      "moduleKey": "privilege",
+      "action": "deny",
+      "sourceAddress": "203.0.113.27",
+      "expiresAt": "2026-10-14T12:26:39.667Z",
+      "evidenceAlertIds": [
+        "pv-08"
+      ]
+    },
+    {
+      "moduleKey": "privilege",
+      "action": "deny",
+      "sourceAddress": "198.51.100.27",
+      "expiresAt": "2026-10-14T12:26:39.667Z",
+      "evidenceAlertIds": [
+        "pv-09"
       ]
     }
   ]
