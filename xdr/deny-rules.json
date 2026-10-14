@@ -212,88 +212,6 @@
       ]
     },
     {
-      "moduleKey": "exfiltration",
-      "action": "deny",
-      "sourceAddress": "192.0.2.20",
-      "expiresAt": "2026-10-14T08:51:02.942Z",
-      "evidenceAlertIds": [
-        "ex-01",
-        "ex-02"
-      ]
-    },
-    {
-      "moduleKey": "exfiltration",
-      "action": "deny",
-      "sourceAddress": "198.51.100.20",
-      "expiresAt": "2026-10-14T08:51:02.942Z",
-      "evidenceAlertIds": [
-        "ex-03"
-      ]
-    },
-    {
-      "moduleKey": "exfiltration",
-      "action": "deny",
-      "sourceAddress": "203.0.113.20",
-      "expiresAt": "2026-10-14T08:51:02.942Z",
-      "evidenceAlertIds": [
-        "ex-04"
-      ]
-    },
-    {
-      "moduleKey": "exfiltration",
-      "action": "deny",
-      "sourceAddress": "192.0.2.25",
-      "expiresAt": "2026-10-14T08:51:02.942Z",
-      "evidenceAlertIds": [
-        "ex-05"
-      ]
-    },
-    {
-      "moduleKey": "exfiltration",
-      "action": "deny",
-      "sourceAddress": "198.51.100.25",
-      "expiresAt": "2026-10-14T08:51:02.942Z",
-      "evidenceAlertIds": [
-        "ex-06"
-      ]
-    },
-    {
-      "moduleKey": "exfiltration",
-      "action": "deny",
-      "sourceAddress": "203.0.113.25",
-      "expiresAt": "2026-10-14T08:51:02.942Z",
-      "evidenceAlertIds": [
-        "ex-07"
-      ]
-    },
-    {
-      "moduleKey": "exfiltration",
-      "action": "deny",
-      "sourceAddress": "192.0.2.26",
-      "expiresAt": "2026-10-14T08:51:02.942Z",
-      "evidenceAlertIds": [
-        "ex-08"
-      ]
-    },
-    {
-      "moduleKey": "exfiltration",
-      "action": "deny",
-      "sourceAddress": "198.51.100.26",
-      "expiresAt": "2026-10-14T08:51:02.942Z",
-      "evidenceAlertIds": [
-        "ex-09"
-      ]
-    },
-    {
-      "moduleKey": "exfiltration",
-      "action": "deny",
-      "sourceAddress": "203.0.113.26",
-      "expiresAt": "2026-10-14T08:51:02.942Z",
-      "evidenceAlertIds": [
-        "ex-10"
-      ]
-    },
-    {
       "moduleKey": "persistence",
       "action": "deny",
       "sourceAddress": "203.0.113.12",
@@ -428,6 +346,88 @@
       "expiresAt": "2026-10-14T12:26:39.667Z",
       "evidenceAlertIds": [
         "pv-09"
+      ]
+    },
+    {
+      "moduleKey": "exfiltration",
+      "action": "deny",
+      "sourceAddress": "192.0.2.20",
+      "expiresAt": "2026-10-14T12:32:02.803Z",
+      "evidenceAlertIds": [
+        "ex-01",
+        "ex-02"
+      ]
+    },
+    {
+      "moduleKey": "exfiltration",
+      "action": "deny",
+      "sourceAddress": "198.51.100.20",
+      "expiresAt": "2026-10-14T12:32:02.803Z",
+      "evidenceAlertIds": [
+        "ex-03"
+      ]
+    },
+    {
+      "moduleKey": "exfiltration",
+      "action": "deny",
+      "sourceAddress": "203.0.113.20",
+      "expiresAt": "2026-10-14T12:32:02.803Z",
+      "evidenceAlertIds": [
+        "ex-04"
+      ]
+    },
+    {
+      "moduleKey": "exfiltration",
+      "action": "deny",
+      "sourceAddress": "192.0.2.25",
+      "expiresAt": "2026-10-14T12:32:02.803Z",
+      "evidenceAlertIds": [
+        "ex-05"
+      ]
+    },
+    {
+      "moduleKey": "exfiltration",
+      "action": "deny",
+      "sourceAddress": "198.51.100.25",
+      "expiresAt": "2026-10-14T12:32:02.803Z",
+      "evidenceAlertIds": [
+        "ex-06"
+      ]
+    },
+    {
+      "moduleKey": "exfiltration",
+      "action": "deny",
+      "sourceAddress": "203.0.113.25",
+      "expiresAt": "2026-10-14T12:32:02.803Z",
+      "evidenceAlertIds": [
+        "ex-07"
+      ]
+    },
+    {
+      "moduleKey": "exfiltration",
+      "action": "deny",
+      "sourceAddress": "192.0.2.26",
+      "expiresAt": "2026-10-14T12:32:02.803Z",
+      "evidenceAlertIds": [
+        "ex-08"
+      ]
+    },
+    {
+      "moduleKey": "exfiltration",
+      "action": "deny",
+      "sourceAddress": "198.51.100.26",
+      "expiresAt": "2026-10-14T12:32:02.803Z",
+      "evidenceAlertIds": [
+        "ex-09"
+      ]
+    },
+    {
+      "moduleKey": "exfiltration",
+      "action": "deny",
+      "sourceAddress": "203.0.113.26",
+      "expiresAt": "2026-10-14T12:32:02.803Z",
+      "evidenceAlertIds": [
+        "ex-10"
       ]
     }
   ]

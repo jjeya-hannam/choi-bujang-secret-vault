@@ -38,6 +38,9 @@ test('failed, missing, negative or nonnumeric transfer volume cannot establish a
   for(const bytes of [undefined,0,-1,'-1','not-a-number',Infinity,NaN,{},true])assert.notEqual(decide(event(text,{bytes,files:100})).action,'block');
   assert.equal(decide(event('전송이 실패 1건으로 끝났습니다. 목적지는 처음 봅니다.',{bytes:0,files:1},5)).action,'alert');
   assert.equal(decide(event('압축 파일 1건을 만들었습니다. 외부 전송은 아직 없습니다.',{bytes:2000000,files:1},5)).action,'alert');
+  for(const description of ['Data was not transferred to a new destination.','Data has not been uploaded to a new destination.','Data was not sent to a new destination.']){
+    const output=decide(event(description,{bytes:120000000,files:100},12));assert.equal(output.action,'alert');assert.equal(output.reason,'incomplete_transfer_review');
+  }
 });
 test('single synchronous decision preserves ambiguity without invoking callbacks or returning promises', () => {
   const input=event('처음 보는 목적지로 작은 파일이 나갔습니다.',{bytes:400000,files:2},6);

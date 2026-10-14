@@ -82,7 +82,7 @@ export function decide(alert) {
   const wholeCollection = /자료실\s*전체|전체\s*자료|entire\s+(?:vault|dataset)|whole\s+collection/iu.test(description);
   const external = /외부\s*주소|외부.{0,10}(?:전송|복사)|external\s+(?:address|destination)|outside\s+network/iu.test(description);
   const completed = /나갔|올라갔|전송됐|전송이|복사됐|uploaded|transferred|sent/iu.test(description);
-  const failure = /실패|전송은\s*아직\s*없|외부\s*전송은\s*아직\s*없|전송.*없습니다|failed|no\s+(?:external\s+)?transfer/iu.test(description);
+  const failure = /실패|전송은\s*아직\s*없|외부\s*전송은\s*아직\s*없|전송.*없습니다|failed|no\s+(?:external\s+)?transfer|\bnot\s+(?:been\s+)?(?:transferred|sent|uploaded|copied)\b/iu.test(description);
   const baselineAnomaly = /평소보다|평소와\s*다른|늘었|높습니다|일부만\s*다른|처럼\s*보이는|자료\s*\d+\s*건.{0,12}읽힌|baseline|unusual|anomal/iu.test(description);
   const normal = /승인된.{0,24}(?:백업|업무|전송|동기화)|(?:정기|정상|허용된|예정된).{0,24}(?:백업|업무\s*전송|동기화)|authorized.{0,24}(?:backup|business|transfer)|scheduled\s+backup|routine\s+(?:backup|business\s+transfer)/iu.test(description);
   const explicitCompromise = /탈취|유출|악성|침해|stolen|unauthorized|malicious/iu.test(description);
