@@ -44,3 +44,51 @@ test('text insertion treats markup as inert text', () => { const payload = '<img
 test('new calls cannot carry previous event explanation or success marker', () => { render(input()); for(const value of [{event:null,explanation:{status:'idle'}},{event:clone(event),explanation:{status:'loading'}},{event:null,explanation:{status:'error',error:{code:'CANCELLED',message:'cancelled'}}}]) {const node=render(value); assert.equal(marker(node).length,0); assert.ok(!text(node).includes('Synthetic AI summary'));} });
 test('other starter view functions remain unchanged', async () => { const src = await readFile(source,'utf8'); for (const name of ['renderIdentity','renderDecision','renderEvents','renderStatus','renderVulnerabilities','renderAiConnection','renderAction']) { assert.equal(typeof view[name], 'function'); assert.match(view[name](), /학생 구현 대기/); } assert.ok(!/\bfetch\s*\(/.test(src)); });
 test('secret-shaped identifiers are rejected without reflection', () => { const fake = 'sk-proj-syntheticexample000'; const variants = []; const eventId = clone(event); eventId.id = fake; variants.push(input(eventId)); const evidenceId = clone(event); evidenceId.evidence[0].id = fake; variants.push(input(evidenceId,{...clone(data),evidenceIds:[fake,'e-B']})); const ruleId = clone(event); ruleId.rules[0].id=fake; variants.push(input(ruleId)); for(const value of variants) {const node=render(value);assert.equal(marker(node).length,0);assert.ok(!text(node).includes(fake));} });
+
+test('safe insufficient-evidence error retains specific reason even without event', () => {
+  const message = '이 기록에는 연결할 근거가 부족하여 설명을 만들 수 없습니다.';
+  for (const currentEvent of [null, clone(event)]) {
+    const node = render({ event: currentEvent, explanation: { status: 'error', error: { code: 'ON_AI_INVALID_OUTPUT', message } } });
+    assert.ok(text(node).includes(message));
+    assert.ok(text(node).includes('ON_AI_INVALID_OUTPUT'));
+    assert.match(text(node), /기록.*그대로|기록.*유지/);
+    assert.equal(marker(node).length, 0);
+  }
+});
+
+test('unsafe missing control and excessive error messages use safe fallback', () => {
+  const rejected = [undefined, null, '', '   ', 'Bearer synthetic-secret-value', 'api_key=synthetic-secret-value', 'sk-proj-syntheticexample000', '앞\u0000뒤', '앞\u001b뒤', '앞\n뒤', '앞\t뒤', '앞\u007f뒤', '초'.repeat(501)];
+  for (const message of rejected) {
+    const node = render({ event: null, explanation: { status: 'error', error: { code: 'ON_AI_INVALID_OUTPUT', message } } });
+    assert.match(text(node), /근거·조치·응답 형식을 확인할 수 없습니다/);
+    if (typeof message === 'string' && message.trim()) assert.ok(!text(node).includes(message));
+    assert.equal(marker(node).length, 0);
+  }
+});
+
+test('safe error markup remains literal text with no DOM execution', () => {
+  const message = '<img src=x onerror=alert(1)> 근거가 부족합니다.';
+  const node = render({ event: null, explanation: { status: 'error', error: { code: 'ON_AI_INVALID_OUTPUT', message } } });
+  assert.ok(text(node).includes(message));
+  assert.equal(walk(node).filter(n => n.tagName === 'IMG').length, 0);
+  assert.equal(marker(node).length, 0);
+});
+
+test('duplicate evidence and unsupported or unconfirmed proposals cannot succeed', () => {
+  const variants = [
+    {...clone(data),evidenceIds:['e-A','e-A']},
+    {...clone(data),requiresHumanConfirmation:false},
+    {...clone(data),proposals:[{action:'revoke_session',evidenceIds:['e-A'],reason:'unsupported action'}]},
+  ];
+  for(const d of variants) assert.equal(marker(render(input(event,d))).length, 0);
+});
+
+test('credential-shaped JWT and personal-address errors are not reflected', () => {
+  const rejected = ['인증 응답 eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzeW50aGV0aWMifQ.syntheticSignature0123456789', '계정 synthetic.person@example.test 연결을 확인하세요.'];
+  for (const message of rejected) {
+    const node = render({event:null, explanation:{status:'error',error:{code:'ON_AI_INVALID_OUTPUT',message}}});
+    assert.ok(!text(node).includes(message));
+    assert.match(text(node), /근거·조치·응답 형식을 확인할 수 없습니다/);
+    assert.equal(marker(node).length, 0);
+  }
+});

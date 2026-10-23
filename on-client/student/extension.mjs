@@ -17,6 +17,9 @@ export function createStudentView() {
         parent.appendChild(node);
         return node;
       };
+      const secret = /(?:Bearer\s+\S+|sk-(?:proj-|ant-|svcacct-)?[A-Za-z0-9_-]{8,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|(?:api[_ -]?key|authorization|password|비밀번호|토큰)\s*[:=]\s*\S+)/i;
+      const text = (value, max) => typeof value === 'string' && value.trim().length > 0
+        && value.length <= max && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value) && !secret.test(value);
       const messages = {
         ON_AI_PROVISIONING_PENDING: '학생 앱 이용 권한의 발급·연결을 준비 중입니다. 담당자에게 확인하세요.',
         WB_CLCO_AUTH_REQUIRED: '학생 앱 AI 인증을 확인하세요. 담당자에게 문의하세요.',
@@ -46,11 +49,14 @@ export function createStudentView() {
         add('p', '기록은 그대로입니다. AI 설명 실패는 과제 실패가 아닙니다.');
         return root;
       };
-      // Never echo arbitrary transport messages, which may contain credentials.
+      // Preserve useful failure details only after checking their display safety.
       if (explanation?.status === 'error') {
         const code = Object.hasOwn(messages, explanation.error?.code)
           ? explanation.error.code : 'AI_REQUEST_UNVERIFIED';
-        return fail(messages[code], code);
+        const message = explanation.error?.message;
+        const sensitiveMessage = /(?:\beyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b|[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?\.[A-Za-z]{2,})/;
+        const safeMessage = text(message, 500) && !/[\u0000-\u001f\u007f]/.test(message) && !sensitiveMessage.test(message);
+        return fail(safeMessage ? message : messages[code], code);
       }
       if (!event) {
         add('p', '보안 기록에서 기록을 먼저 고르세요.');
@@ -66,10 +72,7 @@ export function createStudentView() {
       }
       if (explanation.status !== 'ok') return fail(messages.AI_REQUEST_UNVERIFIED, 'AI_REQUEST_UNVERIFIED');
       const isRecord = value => value !== null && typeof value === 'object' && !Array.isArray(value);
-      const secret = /(?:Bearer\s+\S+|sk-(?:proj-|ant-|svcacct-)?[A-Za-z0-9_-]{8,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|(?:api[_ -]?key|authorization|password|비밀번호|토큰)\s*[:=]\s*\S+)/i;
       const id = value => typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$/.test(value) && !secret.test(value);
-      const text = (value, max) => typeof value === 'string' && value.trim().length > 0
-        && value.length <= max && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value) && !secret.test(value);
       const rows = (value, max) => Array.isArray(value) && value.length > 0 && value.length <= 20
         && value.every(row => isRecord(row) && id(row.id) && text(row.text, max))
         && new Set(value.map(row => row.id)).size === value.length;
