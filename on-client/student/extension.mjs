@@ -2,12 +2,240 @@
 // 제공 UI를 받은 것만으로 단계 완료를 인정하지 않습니다.
 export function createStudentView() {
   return {
-    renderIdentity() { return '학생 구현 대기: 실제 로그인·기기·세션 정보를 연결하세요.'; },
-    renderDecision() { return '학생 구현 대기: 서버의 판정과 이유를 연결하세요.'; },
-    renderEvents() { return '학생 구현 대기: 본인 접속·XDR 기록을 연결하세요.'; },
-    renderStatus() { return '학생 구현 대기: 기기·세션·알림과 연결 점검 상태를 구분하세요.'; },
-    renderVulnerabilities() { return '학생 구현 대기: 정확한 설치 버전·OSV 출처·조회 시각·부분 결과·조회 실패를 구분하세요.'; },
-    renderAiConnection() { return '학생 구현 대기: 모델 응답 점검과 실제 사건 설명을 구분하고 AI 오류·취소·수동 복구를 안내하세요.'; },
+    renderIdentity({ me = {}, devices = {}, sessions = {} } = {}) {
+      const root = document.createElement('section');
+      const add = text => { const n = document.createElement('p'); n.textContent = text; root.append(n); };
+      const ds = { compliant: '보안 기준 충족', noncompliant: '보안 기준 미충족', unknown: '확인 불가' };
+      const ss = { active: '활성', expired: '만료', revoked: '철회됨', unknown: '확인 불가' };
+      const device = d => add(`기기: ${d.label} / ID: ${d.id} / ${ds[d.status] ?? '확인 불가'}(${d.status ?? 'unknown'})`);
+      const session = s => add(`세션 ID: ${s.id} / ${ss[s.status] ?? '확인 불가'}(${s.status ?? 'unknown'})`);
+      for (const [name, r] of [['현재 계정', me], ['등록 기기', devices], ['현재 세션', sessions]]) {
+        add(name);
+        if (r.mode === 'demo') add('예제 자료');
+        if (r.mode === 'disconnected') add('연결 없음');
+        if (r.mode === 'unknown') add('확인 불가');
+        if (r.status === 'loading') { add('불러오는 중'); continue; }
+        if (r.status === 'error') { add(`연결 실패: ${r.error?.message ?? '확인 불가'}`); continue; }
+        if (r.status !== 'ok') { add('확인 불가'); continue; }
+        if (r === me) {
+          if (!r.data?.user || !r.data?.device || !r.data?.session) { add('현재 계정 확인 불가'); continue; }
+          add(`사용자: ${r.data.user.label} / ID: ${r.data.user.id}`); device(r.data.device); session(r.data.session);
+        } else if (!Array.isArray(r.data)) add('목록 확인 불가');
+        else if (!r.data.length) add(r === devices ? '등록된 기기가 없습니다' : '현재 연결이 없습니다');
+        else for (const row of r.data) r === devices ? device(row) : session(row);
+      }
+      return root;
+    },
+    renderDecision({ status, mode, data, error, appId } = {}) {
+      const root = document.createElement('section');
+      const add = text => { const n = document.createElement('p'); n.textContent = text; root.append(n); };
+      if (mode === 'demo') add('예제 자료');
+      if (mode === 'disconnected') add('연결 없음');
+      if (mode === 'unknown') add('확인 불가');
+      if (appId) add(`요청 앱: ${appId}`);
+      if (status === 'idle' || status == null) add('앱을 골라 접속을 요청하세요.');
+      else if (status === 'loading') add('판정 확인 중');
+      else if (status === 'error') { add(`요청 실패: ${error?.message ?? '확인 불가'}`); add('요청 실패는 거부 판정이 아닙니다. 접속 허용 여부를 확인할 수 없습니다.'); }
+      else if (status === 'ok' && data) {
+        const values = { allow: '허용', deny: '거부', challenge: '추가 확인 필요', unknown: '확인 불가' };
+        const decision = Object.hasOwn(values, data.decision) ? data.decision : 'unknown';
+        add(`${values[decision]}(${decision})`); add(`앱: ${data.appId ?? appId ?? '확인 불가'}`);
+        add(`이유: ${data.reason ?? '확인 불가'}`); add(`판정 시각: ${data.checkedAt ?? '확인 불가'}`);
+        if (decision === 'challenge') add('추가 확인 절차가 필요합니다. 이 앱은 확인 절차를 대신 수행하지 않습니다.');
+      } else add('확인 불가(unknown)');
+      return root;
+    },
+    renderEvents({ status, mode, data, error } = {}) {
+      const root = document.createElement('section');
+      const add = (tag, text, parent = root) => { const n = document.createElement(tag); n.textContent = text; parent.append(n); return n; };
+      add('p', '본인의 접속 기록과 저장된 XDR 경보입니다. 전체 로그나 다른 사용자의 기록이 아닙니다.');
+      if (mode === 'demo') add('p', '예제 자료');
+      if (mode === 'disconnected') add('p', '연결 없음');
+      if (mode === 'unknown') add('p', '확인 불가');
+      if (status === 'loading') { add('p', '기록을 불러오는 중'); return root; }
+      if (status === 'error') { add('p', `기록을 불러오지 못했습니다: ${error?.message ?? '확인 불가'}`); return root; }
+      if (status !== 'ok' || !Array.isArray(data)) { add('p', '기록 확인 불가'); return root; }
+      if (!data.length) { add('p', '표시할 기록이 없습니다'); return root; }
+      const states = { access: { allowed: '허용', denied: '거부', unknown: '확인 불가' }, session: { active: '활성', expired: '만료', revoked: '철회됨', unknown: '확인 불가' }, device: { compliant: '보안 기준 충족', noncompliant: '보안 기준 미충족', unknown: '확인 불가' } };
+      const kinds = { access: '접속 기록', xdr: 'XDR 경보' }, filters = {};
+      const select = (key, title, values, labels = {}) => {
+        const label = add('label', title), box = add('select', '', label); box.setAttribute('aria-label', title);
+        for (const value of ['all', ...values]) { const option = add('option', value === 'all' ? '전체' : labels[value] ?? value, box); option.value = value; }
+        box.value = 'all'; filters[key] = box; box.addEventListener('change', draw);
+      };
+      select('kind', '기록 종류', [...new Set(data.map(e => e.kind))], kinds);
+      select('app', '업무 앱', [...new Set(data.map(e => e.appId).filter(Boolean))]);
+      select('access', '접속 상태', [...new Set(data.map(e => e.state?.access ?? 'unknown'))], states.access);
+      const list = add('div', ''), detail = add('div', '');
+      const stateText = (key, value) => `${states[key][value] ?? '확인 불가'}(${Object.hasOwn(states[key], value) ? value : 'unknown'})`;
+      function showDetail(event) {
+        detail.replaceChildren(); const box = add('section', '', detail); box.setAttribute('data-student-event-detail', event.id);
+        add('h4', `사건 ID: ${event.id}`, box); add('p', `업무 앱: ${event.appId || '확인 불가'}`, box);
+        add('h5', '근거', box); for (const row of event.evidence ?? []) add('p', `${row.id}: ${row.text}`, box);
+        add('h5', '규칙', box); for (const row of event.rules ?? []) add('p', `${row.id}: ${row.text}`, box);
+        for (const [key, name] of [['access', '접속'], ['session', '세션'], ['device', '기기']]) add('p', `${name}: ${stateText(key, event.state?.[key])}`, box);
+        for (const action of event.supportedActions ?? []) { const button = add('button', `${action} 미지원`, box); button.type = 'button'; button.disabled = true; }
+        if (event.supportedActions?.length) add('p', '아직 지원하지 않는 조치입니다. 조치 실행 연결은 준비 중입니다. 요청을 보내지 않습니다.', box);
+      }
+      function draw() {
+        list.replaceChildren(); detail.replaceChildren();
+        const rows = [...data].filter(e => (filters.kind.value === 'all' || e.kind === filters.kind.value) && (filters.app.value === 'all' || e.appId === filters.app.value) && (filters.access.value === 'all' || (e.state?.access ?? 'unknown') === filters.access.value)).sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+        if (!rows.length) add('p', '선택한 조건에 맞는 기록이 없습니다', list);
+        for (const event of rows) {
+          const row = add('article', '', list); row.setAttribute('data-student-event-id', event.id);
+          add('p', `사건 ID: ${event.id} / 시각: ${event.at} / 종류: ${kinds[event.kind] ?? '확인 불가'}(${event.kind}) / 업무 앱: ${event.appId || '확인 불가'}`, row);
+          add('p', event.summary, row); const button = add('button', `${event.id} 상세`, row); button.type = 'button'; button.addEventListener('click', () => showDetail(event));
+        }
+      }
+      draw(); return root;
+    },
+    renderStatus({ devices = {}, sessions = {}, notifications = [], diagnostics = {}, mode } = {}) {
+      const root = document.createElement('section');
+      const add = (tag, text, parent = root) => { const n = document.createElement(tag); n.textContent = text; parent.append(n); return n; };
+      const safe = value => typeof value === 'string' && value.length <= 2000 && !/(?:Bearer\s+\S+|sk-(?:proj-|on-)?[A-Za-z0-9_-]{8,}|-----BEGIN|(?:password|secret|token|api[_ -]?key)\s*[:=]|eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)/i.test(value) ? value : '비밀 없는 값을 확인할 수 없습니다';
+      const showMode = value => { if (value === 'demo') add('p', '예제 자료'); if (value === 'disconnected') add('p', '연결 없음'); if (value === 'unknown') add('p', '확인 불가'); };
+      showMode(mode);
+      const names = { compliant: '보안 기준 충족', noncompliant: '보안 기준 미충족', unknown: '확인 불가', active: '활성', expired: '만료', revoked: '철회됨' };
+      for (const [title, resource] of [['기기', devices], ['세션', sessions]]) {
+        add('h4', title); showMode(resource.mode);
+        if (resource.status === 'loading') add('p', `${title === '기기' ? '기기를' : '세션을'} 불러오는 중`);
+        else if (resource.status === 'error') { add('p', `${title === '기기' ? '기기를' : '세션을'} 불러오지 못했습니다${/TIMEOUT/.test(resource.error?.code ?? '') ? ' (시간 초과)' : ''}: ${safe(resource.error?.message)}`); add('p', '다시 시도는 위쪽 다시 불러오기 버튼을 직접 누르세요. 자동으로 다시 요청하지 않습니다.'); }
+        else if (resource.status !== 'ok' || !Array.isArray(resource.data)) add('p', `${title} 확인 불가`);
+        else if (!resource.data.length) add('p', title === '기기' ? '등록된 기기가 없습니다' : '현재 연결이 없습니다');
+        else for (const row of resource.data) add('p', `${title === '기기' ? safe(row.label) + ' / ' : ''}ID: ${safe(row.id)} / ${names[row.status] ?? '확인 불가'}(${safe(row.status)})`);
+      }
+      add('p', '세션은 지금 검증된 연결 하나만 표시합니다.'); add('h4', '알림');
+      if (!notifications.length) add('p', '주의할 알림이 없습니다');
+      for (const note of notifications) add('p', `${safe(note.resource)} / ${safe(note.code)}: ${safe(note.message)}`);
+      add('h4', '도움정보'); showMode(diagnostics.mode); let copyText = '';
+      if (diagnostics.status === 'ok' && diagnostics.data) {
+        const d = diagnostics.data;
+        const safeData = { requestId: safe(d.requestId), component: safe(d.component), version: safe(d.version), checkedAt: safe(d.checkedAt), engine: { mode: safe(d.engine?.mode), code: safe(d.engine?.code) } };
+        copyText = JSON.stringify(safeData, null, 2); add('pre', copyText);
+      } else if (diagnostics.status === 'loading') add('p', '도움정보를 불러오는 중');
+      else if (diagnostics.status === 'error') add('p', `도움정보를 불러오지 못했습니다: ${safe(diagnostics.error?.message)}. 위쪽 도움정보 불러오기 버튼을 직접 누르세요.`);
+      else add('p', '제공 화면에서 도움정보 불러오기를 누르세요.');
+      add('p', '도움 요청에 쓸 비밀 없는 점검 값만 복사합니다.');
+      const button = add('button', '도움정보 복사'); button.type = 'button'; button.disabled = !copyText;
+      const result = add('p', ''); result.setAttribute('role', 'status');
+      button.addEventListener('click', async () => {
+        if (!copyText) return;
+        try { if (!globalThis.navigator?.clipboard?.writeText) throw Error('unavailable'); await globalThis.navigator.clipboard.writeText(copyText); result.textContent = '도움정보를 복사했습니다.'; }
+        catch { result.textContent = '복사하지 못했습니다. 표시된 도움정보를 직접 선택해 복사하세요.'; }
+      });
+      return root;
+    },
+    renderVulnerabilities({ status = 'idle', mode = 'unknown', data, error } = {}) {
+      const root = document.createElement('section');
+      const add = (tag, value, parent = root) => {
+        const node = document.createElement(tag);
+        node.textContent = value;
+        parent.appendChild(node);
+        return node;
+      };
+      const text = value => typeof value === 'string' || typeof value === 'number' ? String(value) : '확인 불가';
+      add('h4', '설치 패키지 취약점 조회');
+      const modes = { demo: '예제 자료', disconnected: '연결 없음', unknown: '확인 불가' };
+      if (Object.hasOwn(modes, mode)) add('p', modes[mode]);
+      if (status === 'idle') { add('p', '조회 전(idle). 제공 화면에서 설치 패키지 조회를 누르세요.'); return root; }
+      if (status === 'loading') { add('p', '조회 중(loading). 이전 결과는 현재 조회 결과가 아닙니다.'); return root; }
+      if (status === 'error') {
+        const message = typeof error?.message === 'string' && error.message.length <= 1000
+          && !/[\u0000-\u001f\u007f]|Bearer\s+\S+|sk-[\w-]{8,}|-----BEGIN|(?:password|api[_ -]?key|authorization)\s*[:=]/i.test(error.message)
+          ? error.message : '오류 내용을 안전하게 확인할 수 없습니다.';
+        add('p', `조회 실패: ${message}`);
+        add('p', '조회 실패로 취약점 유무를 판단할 수 없습니다. 제공 화면에서 직접 다시 조회하세요.');
+        return root;
+      }
+      const scans = { complete: '모두 조회(complete)', partial: '일부 조회 실패(partial)', not_checked: '아직 조회 안 함(not_checked)', not_configured: '조회 준비 미완료(not_configured)', unverifiable: 'lock 파일 확인 불가(unverifiable)' };
+      if (status !== 'ok' || !data || !Object.hasOwn(scans, data.status)) {
+        add('p', '조회 결과 확인 불가. 제공 화면에서 직접 다시 조회하세요.'); return root;
+      }
+      add('p', scans[data.status]);
+      add('p', `lockfileVersion: ${text(data.lockfileVersion)}`);
+      add('p', `lockfileHash: ${text(data.lockfileHash)}`);
+      add('p', `조회 시각: ${text(data.checkedAt)}`);
+      if (!Array.isArray(data.packages) || data.packages.length === 0) {
+        add('p', '표시할 패키지 조회 결과가 없습니다. 미조회·설정 없음·확인 불가는 취약점 없음의 근거가 아닙니다.');
+        return root;
+      }
+      const states = { known_vulnerabilities: '알려진 항목 있음', none_found: '알려진 항목 없음', unverifiable: '조회 확인 불가' };
+      const list = add('ul', '');
+      for (const item of data.packages) {
+        const row = add('li', '', list);
+        row.setAttribute('data-student-package-name', text(item.name));
+        row.setAttribute('data-student-package-version', text(item.version));
+        add('p', `패키지: ${text(item.name)} · 설치 버전: ${text(item.version)}`, row);
+        const findings = Array.isArray(item.vulnerabilities) ? item.vulnerabilities : [];
+        const inconsistent = item.status === 'none_found' && findings.length > 0;
+        const label = inconsistent ? '상태와 조회 항목 불일치·확인 불가' : Object.hasOwn(states, item.status) ? states[item.status] : '조회 확인 불가';
+        add('p', `상태: ${label} (${text(item.status)})`, row);
+        add('p', `출처: ${text(item.source)}`, row);
+        add('p', `조회 시각: ${text(item.checkedAt)}`, row);
+        if (item.status === 'unverifiable' && findings.length > 0) add('p', '일부 확인·전체 조회 확인 불가', row);
+        for (const finding of findings) add('p', `취약점 ID: ${text(finding.id)} · 수정 시각(modified): ${text(finding.modified)}`, row);
+      }
+      add('p', '조회된 공개 취약점 정보이며 패키지의 전반적인 안전성 판정이나 치료 결과가 아닙니다.');
+      return root;
+    },
+    renderAiConnection({ status = 'idle', mode = 'unknown', data, error, checkedAt, explanationAccepted = false } = {}) {
+      const root = document.createElement('section');
+      const add = (tag, text) => { const node = document.createElement(tag); node.textContent = text; root.appendChild(node); };
+      add('h4', 'AI 연결 점검');
+      const modes = { connected: '연결된 자료(connected)', demo: '예제 자료(demo) · 실제 게이트 수용 아님', disconnected: '연결 없음(disconnected)', unknown: '연결 상태 확인 불가(unknown)' };
+      add('p', modes[mode] || modes.unknown);
+      const manual = () => add('p', '다시 점검하려면 제공 화면의 「현재 API 연결 점검」 버튼을 직접 누르세요. 자동으로 다시 요청하지 않습니다.');
+      const messages = {
+        ON_AI_PROVISIONING_PENDING: '학생 계정 연결과 앱 권한 발급을 준비 중입니다. 담당자에게 확인하세요.',
+        WB_CLCO_AUTH_REQUIRED: '인증을 확인할 수 없습니다. 계정 연결을 다시 확인하고 담당자에게 문의하세요.',
+        WB_CLCO_ACCESS_BLOCKED: 'AI 접근이 제한됐습니다. 이용 권한을 담당자에게 확인하세요.',
+        WB_CLCO_COHORT_BUDGET_EXHAUSTED: '반의 AI 사용량이 소진됐습니다. 담당자에게 확인하세요.',
+        WB_CLCO_RATE_LIMITED: 'AI 요청이 제한됐습니다. 잠시 뒤 직접 다시 점검하세요.',
+        WB_CLCO_LIMIT_REACHED: 'AI 이용 한도에 도달했습니다. 담당자에게 확인하세요.',
+        WB_CLCO_SESSION_CLOSED: '현재 AI 이용 시간이 아닙니다. 이용 시간을 확인하세요.',
+        WB_CLCO_TIMEOUT: 'AI 응답 시간이 초과됐습니다. 잠시 뒤 직접 다시 점검하세요.',
+        REQUEST_TIMEOUT: '서버의 AI 응답 시간이 초과됐습니다. 잠시 뒤 직접 다시 점검하세요.',
+        ENGINE_TIMEOUT: '서버의 확인 시간이 초과됐습니다. 잠시 뒤 직접 다시 점검하세요.',
+        TIMEOUT: 'AI 응답 시간이 초과됐습니다. 잠시 뒤 직접 다시 점검하세요.',
+        WB_CLCO_CANCELLED: 'AI 연결 점검을 취소했습니다. 이전 응답은 현재 결과가 아닙니다.',
+        CANCELLED: 'AI 연결 점검을 취소했습니다. 이전 응답은 현재 결과가 아닙니다.',
+        REQUEST_CANCELLED: 'AI 연결 점검을 취소했습니다. 이전 응답은 현재 결과가 아닙니다.',
+        MODEL_NOT_CONFIGURED: '사용할 AI 모델이 설정되지 않았습니다. 담당자에게 모델 허용 설정을 확인하세요.',
+        ON_AI_AUTHORIZATION_CHANGED: 'AI 이용 권한이 바뀌었습니다. 계정 연결과 현재 앱 권한을 담당자에게 확인하세요.',
+        ON_AI_MODEL_LIST_EMPTY: '현재 앱 권한으로 쓸 수 있는 AI 모델이 없습니다. 담당자에게 모델 허용 설정을 확인하세요.',
+        SUBJECT_SCOPE_UNVERIFIED: '현재 로그인과 프로젝트의 연결을 확인할 수 없습니다. 담당자에게 계정 연결을 확인하세요.',
+        ON_AI_INVALID_INPUT: 'AI 요청 입력을 확인할 수 없습니다. 담당자에게 확인하세요.',
+        ON_AI_INVALID_OUTPUT: 'AI 응답 형식을 확인할 수 없습니다. 담당자에게 확인하세요.',
+        AI_REQUEST_UNVERIFIED: 'AI 연결 또는 응답을 확인할 수 없습니다. 연결 상태를 확인하고 잠시 뒤 직접 다시 점검하세요.',
+      };
+      const safeMessage = value => typeof value === 'string' && value.trim().length > 0 && value.length <= 500
+        && !/[\u0000-\u001f\u007f]/.test(value)
+        && !/(?:Bearer\s+\S+|sk-(?:proj-|ant-|svcacct-)?[A-Za-z0-9_-]{8,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|(?:api[_ -]?key|authorization|password|비밀번호|토큰)\s*[:=]\s*\S+|\beyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b|[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?\.[A-Za-z]{2,})/i.test(value);
+      const fail = (code, message) => {
+        add('p', `AI 연결 점검 실패: ${code}: ${message}`); add('p', messages[code]);
+        add('p', '이전 점검 결과는 현재 결과가 아닙니다. 사건 설명의 모델 호출과 결과는 확인되지 않았습니다.');
+        manual(); return root;
+      };
+      if (status === 'idle') { add('p', 'AI 연결 점검 전(idle)입니다. 이전 점검 결과는 현재 결과가 아닙니다.'); manual(); return root; }
+      if (status === 'loading') {
+        add('p', 'AI 연결 점검 중(loading)입니다. 이전 모델 수와 오류는 현재 결과가 아닙니다.');
+        add('p', '필요하면 제공 화면의 「취소」 버튼을 누르세요. 사건 설명은 아직 실행하지 않았습니다.'); return root;
+      }
+      if (status === 'error') {
+        const code = Object.hasOwn(messages, error?.code) ? error.code : 'AI_REQUEST_UNVERIFIED';
+        return fail(code, safeMessage(error?.message) ? error.message : messages[code]);
+      }
+      const validTime = typeof checkedAt === 'string' && checkedAt.length <= 40
+        && /^\d{4}-\d{2}-\d{2}T[\d:.]+(?:Z|[+-]\d{2}:\d{2})$/.test(checkedAt) && Number.isFinite(Date.parse(checkedAt));
+      if (status !== 'ok' || data?.transportChecked !== true || !['test', 'verified'].includes(data.audienceAuthorization)
+        || !Number.isInteger(data.modelCount) || data.modelCount < 0 || data.modelCount > 10000 || !validTime) return fail('AI_REQUEST_UNVERIFIED', messages.AI_REQUEST_UNVERIFIED);
+      add('p', data.audienceAuthorization === 'test' ? '시험 연결 점검(test) · 실제 게이트 수용 아님' : '앱 권한 확인 후 점검(verified) · 해당 점검 시각 기준');
+      add('p', '전송 연결 점검 확인: transportChecked: true');
+      add('p', `응답 모델 수: ${data.modelCount}`); add('p', `점검 시각: ${checkedAt}`);
+      add('p', '연결과 모델 목록 응답만 점검했습니다. 사건 설명은 아직 실행하지 않았습니다. 실제 사건 설명의 모델 호출과 검증된 결과는 보안 기록에서 별도로 확인하세요.');
+      if (data.modelCount === 0) add('p', '현재 응답에 쓸 수 있는 모델이 없습니다. 담당자에게 모델 허용 설정을 확인하세요.');
+      manual(); return root;
+    },
     renderExplanation({ event = null, explanation = {}, checkedAt = null } = {}) {
       // Every render owns a fresh tree. The host discards late requests on record changes.
       const root = document.createElement('section');
@@ -144,6 +372,54 @@ export function createStudentView() {
       }
       return root;
     },
-    renderAction() { return '학생 구현 대기: 현재 사건·조치·실제 대상·사람 확인·ACK와 원천 효과·unknown을 구분하세요.'; },
+    renderAction({ status = 'idle', event, actionId, target, receipt, observation, message, confirmationExpiresAt, error } = {}) {
+      const root = document.createElement('section');
+      const add = (tag, value) => {
+        const node = document.createElement(tag);
+        node.textContent = value;
+        root.appendChild(node);
+        return node;
+      };
+      const safe = value => (typeof value === 'string' || typeof value === 'number')
+        && String(value).trim().length > 0 && String(value).length <= 1000
+        && !/[\u0000-\u001f\u007f]|Bearer\s+\S+|sk-(?:proj-)?[\w-]{8,}|-----BEGIN|(?:password|api[_ -]?key|authorization)\s*[:=]/i.test(String(value));
+      const field = (label, value) => { if (safe(value)) add('p', `${label}: ${value}`); };
+      const labels = {
+        idle: '아직 미실행(idle)',
+        loading: '조치 준비 또는 결과 조회 중(loading)',
+        prepared: '준비됨·미실행(prepared). 제공 화면에서 실제 대상과 조치·확인 기한을 확인하세요.',
+        executing: '서버에 전달 중(executing). 처리 결과는 아직 확인되지 않았습니다.',
+        pending: '서버 접수·처리 중(pending). 접수 응답(ACK)은 효과 확인이 아닙니다.',
+        denied: '거절(denied)', failed: '실패(failed)',
+        expired: '확인 기한 지남(expired). 제공 화면에서 다시 준비하세요.',
+        error: '요청 처리 안 됨(error)',
+      };
+      const confirmed = status === 'succeeded' && observation?.effectApplied === true;
+      add('h4', '조치 요청 상태');
+      if (confirmed) {
+        add('p', '효과 확인(succeeded)');
+        field('관측 시각', observation.observedAt);
+        add('p', 'effectApplied: true');
+      } else if (status === 'unknown' || status === 'succeeded' || !Object.hasOwn(labels, status)) {
+        add('p', '결과 불명(unknown). 성공 또는 효과 없음으로 판단할 수 없습니다. 제공 화면에서 연동 시스템 결과만 재조회하세요.');
+        if (status === 'succeeded') add('p', '수신 상태: succeeded. effectApplied: true가 확인되지 않았습니다.');
+      } else add('p', labels[status]);
+      field('사건 ID', event?.id);
+      if (safe(event?.id)) root.setAttribute('data-student-action-event', String(event.id));
+      if (Array.isArray(event?.evidence)) for (const proof of event.evidence) field('근거 ID', proof?.id);
+      field('조치 ID', actionId); field('대상 ID', target?.id); field('대상 generation', target?.generation);
+      field('확인 기한', confirmationExpiresAt); field('요청 ID', receipt?.requestId);
+      field('접수 ID(receiptId)', receipt?.receiptId); field('접수 version', receipt?.version); field('접수 상태', receipt?.status);
+      if (safe(receipt?.requestId)) root.setAttribute('data-student-action-request', String(receipt.requestId));
+      if (receipt?.replayed === true) add('p', '같은 요청의 기존 접수 결과입니다(replayed: true). 새 실행으로 세지 않습니다.');
+      if (['denied', 'failed', 'error', 'expired'].includes(status)) {
+        field('안내', message); field('오류 코드', error?.code); field('오류 내용', error?.message);
+        if (!safe(message) && !safe(error?.message)) add('p', '구체적인 사유는 확인할 수 없습니다.');
+      }
+      if (Array.isArray(event?.supportedActions) && event.supportedActions.length === 0) add('p', '연동 시스템이 지원하는 조치가 없어 조치 준비 버튼이 표시되지 않는 것이 정상입니다.');
+      add('p', '조치 제안은 실행이 아닙니다. 집행에는 제공 화면의 사람 확인이 필요합니다. 학생 영역은 요청을 보내지 않습니다.');
+      add('p', '조치 화면 취소는 서버에 전달된 조치 효과를 되돌리지 않습니다.');
+      return root;
+    },
   };
 }
