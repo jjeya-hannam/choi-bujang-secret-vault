@@ -223,3 +223,8 @@ xdr/shared/request-guard.mjs는 서버가 제공하는 출발 주소 확인·애
 - [작업 경계와 인수인계](on-client/docs/GAMST_HANDOFF.md)
 
 실행 명령: on-client 폴더에서 node src/server.mjs --demo. 기본 주소는 http://127.0.0.1:5189 이며 정상 시작 신호·종료·재실행·오류별 확인 순서는 설명서를 따릅니다. 예제는 실제 연결 재현이 아닙니다. 브라우저 조작·실제 계정·유료 모델 호출·보안 집행·OSV 실조회는 아직 미확인입니다. 기존 제공 화면·서버·인증 설정은 변경하지 않습니다.
+
+
+### gamst 최종 인수인계 · 검증 중
+
+버전 gamst-review-2026-10-25. [동일 소스의 새 폴더 실행·누적 관찰·데이터 보존 계획](on-client/docs/GAMST_FINAL_HANDOVER.md), [제품 원문 manifest](on-client/docs/GAMST_SOURCE_MANIFEST.json), [지원 범위·버전 기록](on-client/docs/GAMST_RELEASE.json)을 함께 봅니다. 실제 연동·사용자 직접 확인 미완료를 원문 검토 수료와 구분하며 v1.0으로 표시하지 않습니다.

@@ -1,0 +1,694 @@
+{
+  "version": "gamst-review-2026-10-25",
+  "state": "검증 중",
+  "sourceRevision": "713c21ab77646e8bf6489a5708c9a974bb0fb093",
+  "scope": "tracked non-Markdown files outside docs; documentation and execution records excluded to avoid self-reference",
+  "manifestSha256": "88dfdfecfbbcfe6f599b4dfdf69767271f53b1cd6cbd381ddb5c5324a59cafc8",
+  "studentCanonicalSha256": "b1e4f7981c5db455bb397859aba54527b0099817620d04f20f6ee86cb84f0d1f",
+  "files": [
+    {
+      "path": ".gitignore",
+      "gitBlob": "a14fbdd5ced0ba54527bfc6085a96c83a63efb32"
+    },
+    {
+      "path": "aleph.config.json",
+      "gitBlob": "1e34c432f2aaaedbe41612931a79c7e0c81f7e40"
+    },
+    {
+      "path": "api/ai.js",
+      "gitBlob": "f0b3b858dea2d91c463a9e50d3d451f9dc54ca90"
+    },
+    {
+      "path": "api/announcements/[id].js",
+      "gitBlob": "91c1f587a9f3f9f9165f4f5cb95508a87c073795"
+    },
+    {
+      "path": "api/auth.js",
+      "gitBlob": "5c3909909b11b1caa4f06faed846834d246ab15c"
+    },
+    {
+      "path": "api/device.js",
+      "gitBlob": "ba979030671da7d801bc06c41e7b2b7f84b7c2c1"
+    },
+    {
+      "path": "api/notes.js",
+      "gitBlob": "bdf186a86bac642868da483810c6bc1686619cfd"
+    },
+    {
+      "path": "api/notes/[id].js",
+      "gitBlob": "7c420c269dca7cad93f773da8ca1710c2be6ed66"
+    },
+    {
+      "path": "api/operations.js",
+      "gitBlob": "17b7e9790b495e26981f512b8f489bf5adf8f83f"
+    },
+    {
+      "path": "api/restore.js",
+      "gitBlob": "f5e3738846aa06f13744768dd0ba2814e9a103b4"
+    },
+    {
+      "path": "api/threat-intel.js",
+      "gitBlob": "1676d77ae2c6ba2d578e3d155d27a7aaa7708a8a"
+    },
+    {
+      "path": "data.json",
+      "gitBlob": "fe0e3418dff528805eb069ad8940628268a918fa"
+    },
+    {
+      "path": "on-client/.env.example",
+      "gitBlob": "8eeef89c28b975fe8a4aa7b793b1137ada0ba31c"
+    },
+    {
+      "path": "on-client/.gitignore",
+      "gitBlob": "19931ccf5329fce6f00cd3fec2c5a71d4fd8c9ad"
+    },
+    {
+      "path": "on-client/.on-starter-manifest.json",
+      "gitBlob": "138b16a9c2698a72fe589bc100e86c21dad46fba"
+    },
+    {
+      "path": "on-client/package.json",
+      "gitBlob": "08f4012e72db634f609fee9850c623e5faa08a2f"
+    },
+    {
+      "path": "on-client/public/ai-connect.mjs",
+      "gitBlob": "dfc587dbe13216c87ec83ae12670080b710cba39"
+    },
+    {
+      "path": "on-client/public/app.js",
+      "gitBlob": "6dc6d24eeb0e935c23d4587e110d041b32bfc2c5"
+    },
+    {
+      "path": "on-client/public/assets/alekov/alekov-ai-explain.webp",
+      "gitBlob": "0c092ac3baf382f796863914863616eb3debabcf"
+    },
+    {
+      "path": "on-client/public/assets/alekov/alekov-app-icon.webp",
+      "gitBlob": "a071b6dff9f9b092baecd0f2ad1be24b28c7e8fd"
+    },
+    {
+      "path": "on-client/public/assets/alekov/alekov-connect-approval.webp",
+      "gitBlob": "dc80dcd31acc68a355634d58ddf063600b25c9f0"
+    },
+    {
+      "path": "on-client/public/assets/alekov/alekov-connection-unknown.webp",
+      "gitBlob": "984acb6bf04c6549d6060abb573641221255d5e9"
+    },
+    {
+      "path": "on-client/public/assets/alekov/alekov-empty-records.webp",
+      "gitBlob": "c21e2bc096ff233af964916cb56276884a55ffb3"
+    },
+    {
+      "path": "on-client/public/index.html",
+      "gitBlob": "f079f53c87e4f52e055b7318fb82d10407352c5c"
+    },
+    {
+      "path": "on-client/public/style.css",
+      "gitBlob": "cac99b9e8aca456970546ace76addb2bda20c2ec"
+    },
+    {
+      "path": "on-client/public/vulnerabilities-view.mjs",
+      "gitBlob": "31adffd9701df776ded8bbbf866e7f22aae160e9"
+    },
+    {
+      "path": "on-client/src/actions/action-startup-config.mjs",
+      "gitBlob": "fe6cdd8b865760a041ea8a12ba1debf977be7146"
+    },
+    {
+      "path": "on-client/src/actions/sdp-action-engine.mjs",
+      "gitBlob": "4a956969f3a9dc26cc571bde4ea76c63eb690d87"
+    },
+    {
+      "path": "on-client/src/actions/service.mjs",
+      "gitBlob": "3cebdf1c4f80db6872221e0d7f9afaf99cbc13ab"
+    },
+    {
+      "path": "on-client/src/actions/store.mjs",
+      "gitBlob": "d91ecef6bc0dddbee6a8841367f7cb7be05d67b6"
+    },
+    {
+      "path": "on-client/src/ai/app-authorization.mjs",
+      "gitBlob": "24d29ab42cf4f6b34c8ebd1a3ce533348088a7d6"
+    },
+    {
+      "path": "on-client/src/ai/connection.mjs",
+      "gitBlob": "316a1abb222417b720f7b8c62d8b8fce66f18a68"
+    },
+    {
+      "path": "on-client/src/ai/credential-vault.mjs",
+      "gitBlob": "516a4f805338f219a34881cc2749e0f8e0fe6e55"
+    },
+    {
+      "path": "on-client/src/ai/learner-support-contract.mjs",
+      "gitBlob": "35c8f2aa68054355c61f59b33cd2c6e25d724881"
+    },
+    {
+      "path": "on-client/src/ai/service.mjs",
+      "gitBlob": "067a08e098f0fdb8f00494fe9ac171b1434e3e6d"
+    },
+    {
+      "path": "on-client/src/ai/vault-service.mjs",
+      "gitBlob": "b8d67435c73854f3715fb957d819ea55f0ed8984"
+    },
+    {
+      "path": "on-client/src/connection/manager.mjs",
+      "gitBlob": "6eb55a23821a07071409532315bbb937a43f0d8e"
+    },
+    {
+      "path": "on-client/src/connection/native-context.mjs",
+      "gitBlob": "4ed952687549f0e538d90fef40be02b488ac4045"
+    },
+    {
+      "path": "on-client/src/connection/native-login.mjs",
+      "gitBlob": "7814d238390bbc7d70a74f53fb29613b71150138"
+    },
+    {
+      "path": "on-client/src/engine.mjs",
+      "gitBlob": "6ceb3560da2ecd3cd4b29789204b4432f6073c69"
+    },
+    {
+      "path": "on-client/src/engine/sdp-host-config.mjs",
+      "gitBlob": "23127c8113e40bbd2dd379ec64239b453d02363c"
+    },
+    {
+      "path": "on-client/src/engine/sdp-host.mjs",
+      "gitBlob": "5fd341e248dae8aa515e2512c440f7ee1c18d35c"
+    },
+    {
+      "path": "on-client/src/learner-support/service.mjs",
+      "gitBlob": "81358fa5212c4381209ed51ce321e1e127a09ecd"
+    },
+    {
+      "path": "on-client/src/server.mjs",
+      "gitBlob": "7858dcadd01ad682e94f5254eff3a4b099ca3ccb"
+    },
+    {
+      "path": "on-client/src/vulnerabilities/osv.mjs",
+      "gitBlob": "c7753ca36ab66ed7cfcc77eba473a81763ea44fd"
+    },
+    {
+      "path": "on-client/src/vulnerabilities/project-scan.mjs",
+      "gitBlob": "5a6725a8de1f693f978fbc08bc3757f7a74dab91"
+    },
+    {
+      "path": "on-client/student/engine-adapter.mjs",
+      "gitBlob": "4b1f88460e223825285337aa1bab06378cc0767f"
+    },
+    {
+      "path": "on-client/student/extension.mjs",
+      "gitBlob": "08baa788794d1983772fa49d188164fbe4aaa50b"
+    },
+    {
+      "path": "on-client/test/action-scan.test.mjs",
+      "gitBlob": "ce8769b393d11c0e4342cda16db6bc192087cf77"
+    },
+    {
+      "path": "on-client/test/ai-connection.test.mjs",
+      "gitBlob": "6b2e52f221c426a0dd1a296b35bd70fae56ad9f2"
+    },
+    {
+      "path": "on-client/test/identity-status.test.mjs",
+      "gitBlob": "fe54f8b16cd893697dd383565bb7c68c7efd7cc0"
+    },
+    {
+      "path": "on-client/test/render-explanation.test.mjs",
+      "gitBlob": "6a8277e9ded22386a7c6d976caa95590457379f1"
+    },
+    {
+      "path": "on-client/tools/app-credentials.ps1",
+      "gitBlob": "9d39b793740ec434c098fca7aa5c4bd3389881e4"
+    },
+    {
+      "path": "on-client/tools/native-host-registry.ps1",
+      "gitBlob": "870cbfc86799188b4651d878cbd09f4a58f89e91"
+    },
+    {
+      "path": "on-client/tools/prepare-native-host.ps1",
+      "gitBlob": "5847ef6fa9d3224efc31caf66f6133720971e76b"
+    },
+    {
+      "path": "on-client/tools/start-alekov.ps1",
+      "gitBlob": "ef0fcb6c515c2a1c30745e67dc3f702955417827"
+    },
+    {
+      "path": "on-client/vendor/clco-http.mjs",
+      "gitBlob": "d5e09826819cda73d0b1c33f1df6ea4d28bfb612"
+    },
+    {
+      "path": "package-lock.json",
+      "gitBlob": "92791113c9680fb69cb531de7847b84ecb3f4553"
+    },
+    {
+      "path": "package.json",
+      "gitBlob": "6ada2b0d630ef306261559908be55b06362d0a3d"
+    },
+    {
+      "path": "package/baseline-functions.json",
+      "gitBlob": "70c86820e9bd6923881f8bf5dab88ff167347441"
+    },
+    {
+      "path": "package/self-check/.gitkeep",
+      "gitBlob": "8b137891791fe96927ad78e64b0aad7bded08bdc"
+    },
+    {
+      "path": "package/self-check/operations.json",
+      "gitBlob": "73cdc304950cd17fd0fd3fb67a1f3f73a6640372"
+    },
+    {
+      "path": "policy-backups/stage9/manifest.json",
+      "gitBlob": "6111a3bf7026ccf70085a948df8a5e74037ddee2"
+    },
+    {
+      "path": "policy-backups/stage9/src/decider.mjs",
+      "gitBlob": "74afc61715c1d30d106fcdad0726ab4020d54740"
+    },
+    {
+      "path": "policy-backups/stage9/src/detect.mjs",
+      "gitBlob": "eec317cced522290d1732fa4a8dedb81857027cc"
+    },
+    {
+      "path": "policy-backups/stage9/src/resource-policy.mjs",
+      "gitBlob": "db4f3b1731561b4694957d9e6724e1cb87d69200"
+    },
+    {
+      "path": "policy-backups/stage9/src/verify-login.mjs",
+      "gitBlob": "03c39d1cbbd51e5b85ba32912a2d218e4c5aafcc"
+    },
+    {
+      "path": "public/bonus.html",
+      "gitBlob": "54b4e130f6a14dd4eff78014524059e1783ac1a3"
+    },
+    {
+      "path": "public/icons/vault-192.png",
+      "gitBlob": "313c16eb34e446cac5338791ca80f9ddb8ecc701"
+    },
+    {
+      "path": "public/icons/vault-512.png",
+      "gitBlob": "a9790254e787b59f9a46fb490a716dc547d1c67e"
+    },
+    {
+      "path": "public/icons/vault.svg",
+      "gitBlob": "39e54b25ed48ed0961971eba2c7736d7497b1492"
+    },
+    {
+      "path": "public/index.html",
+      "gitBlob": "8ef200e076bade509720464e11cd4f29f460196e"
+    },
+    {
+      "path": "public/manifest.webmanifest",
+      "gitBlob": "93fe3ff3751c8bceb91814fc0768e70b9c434351"
+    },
+    {
+      "path": "public/offline.html",
+      "gitBlob": "b54bd96a29ba27cb8770b505e7620e6da4e7a900"
+    },
+    {
+      "path": "public/operations.css",
+      "gitBlob": "4c6db414c0341a7abab7a6898f98561218ce090f"
+    },
+    {
+      "path": "public/operations.html",
+      "gitBlob": "f9be8fb8077c391e2cceb447cda3818b959210e2"
+    },
+    {
+      "path": "public/operations.js",
+      "gitBlob": "fffa1f29b039997fea0321d52f6350ee15e4ee36"
+    },
+    {
+      "path": "public/sw.js",
+      "gitBlob": "eb2c28468e86dfa8ed1429cb36c48da14adcdc41"
+    },
+    {
+      "path": "scripts/build-public.mjs",
+      "gitBlob": "f9c7a4d3bd2a109386b4dab585fc3f1ed434ec91"
+    },
+    {
+      "path": "scripts/bundle.mjs",
+      "gitBlob": "cb00985e9f6bda5fa34790b4a17c67a14e2c96b7"
+    },
+    {
+      "path": "scripts/decider-test.mjs",
+      "gitBlob": "c78b25f29b181f2ffd5568be84d2354d98363133"
+    },
+    {
+      "path": "scripts/deployment-identity.mjs",
+      "gitBlob": "20f8cf9b54feab867b04e188cbf6cfef76305817"
+    },
+    {
+      "path": "scripts/detect-test.mjs",
+      "gitBlob": "c4a93967317417427665816494646d45dcc4e76a"
+    },
+    {
+      "path": "scripts/fixture-7.mjs",
+      "gitBlob": "bbfc5e8189a27a6ff2fe134f1174620e20cc33ca"
+    },
+    {
+      "path": "scripts/operations-check.mjs",
+      "gitBlob": "3bb8aebe029e12451ab172827276f185d982a5ce"
+    },
+    {
+      "path": "scripts/policy-recovery.mjs",
+      "gitBlob": "5dffc7bb9b161f94512532ea56d994018a3c6b4c"
+    },
+    {
+      "path": "scripts/xdr-run.mjs",
+      "gitBlob": "e44d10c22d88bab080c17089c7113dab37aef202"
+    },
+    {
+      "path": "src/attack-check.mjs",
+      "gitBlob": "2d430092b263cc46dd42fc7bdbff00e5ab5e69e9"
+    },
+    {
+      "path": "src/browser-session.mjs",
+      "gitBlob": "aed8e03f1b64764d48f5b670d6e70a5145855a15"
+    },
+    {
+      "path": "src/decider.mjs",
+      "gitBlob": "f6d4630ce8058805560b00c5d167c5bc92e632bb"
+    },
+    {
+      "path": "src/detect.mjs",
+      "gitBlob": "eec317cced522290d1732fa4a8dedb81857027cc"
+    },
+    {
+      "path": "src/notes-api.mjs",
+      "gitBlob": "157752771176045abf0b45d80ea5440bbf6748a1"
+    },
+    {
+      "path": "src/operations-report.mjs",
+      "gitBlob": "918aa0d4ab7cb3584c131ce06d80fb44efa94be1"
+    },
+    {
+      "path": "src/resource-policy.mjs",
+      "gitBlob": "db4f3b1731561b4694957d9e6724e1cb87d69200"
+    },
+    {
+      "path": "src/restore-api.mjs",
+      "gitBlob": "09283a67e6f80c195e6056ee28e71da291a38c21"
+    },
+    {
+      "path": "src/verify-login.mjs",
+      "gitBlob": "03c39d1cbbd51e5b85ba32912a2d218e4c5aafcc"
+    },
+    {
+      "path": "supabase/stage10.sql",
+      "gitBlob": "0d0a936725a39609792ddd60d10b77e29fb4a8ab"
+    },
+    {
+      "path": "supabase/stage11.sql",
+      "gitBlob": "fdfe3e47511f064ed528512e4b1a5117dac6769a"
+    },
+    {
+      "path": "supabase/stage3.sql",
+      "gitBlob": "330928731b977026e86a4748298149a5024eec5d"
+    },
+    {
+      "path": "supabase/stage4.sql",
+      "gitBlob": "3b3dad8206d8a13a1cae0d363c3f4aa15c4ba5fb"
+    },
+    {
+      "path": "supabase/stage5.sql",
+      "gitBlob": "6eeb64b0eae61b787e8cd35c351cf1a72eb0c8ec"
+    },
+    {
+      "path": "supabase/step2_notes.sql",
+      "gitBlob": "25b70aa159a73d3ca2a7452bbc0ae57f1781c18c"
+    },
+    {
+      "path": "test/api-diagnostics-r8.test.mjs",
+      "gitBlob": "e463553d5cd3a1532f04411f28d8d94c6c588295"
+    },
+    {
+      "path": "test/attack-check-runner-r12.test.mjs",
+      "gitBlob": "13bf7f8ba6493794fb10393f6c6275429402fee0"
+    },
+    {
+      "path": "test/auth-boundary-r8.test.mjs",
+      "gitBlob": "4d809fee7f06729524e660fff5f3d480e764739c"
+    },
+    {
+      "path": "test/decider-r6.test.mjs",
+      "gitBlob": "3432740e4e2624e07465999ca43b4bc8efa57411"
+    },
+    {
+      "path": "test/decider-r7.test.mjs",
+      "gitBlob": "c97ddbda706aa6395c77378fe78b9d8294b61228"
+    },
+    {
+      "path": "test/detect-r9.test.mjs",
+      "gitBlob": "ec02ad941c8a02d975710779c9af4dfbf84bb1cd"
+    },
+    {
+      "path": "test/known-cve-decide.test.mjs",
+      "gitBlob": "57e384c2278139f45f8a931eca1a7645095dc724"
+    },
+    {
+      "path": "test/known-cve-read-alerts.test.mjs",
+      "gitBlob": "b68fb63c00b0d89b76646f95342d147200f597c4"
+    },
+    {
+      "path": "test/known-cve-respond.test.mjs",
+      "gitBlob": "e282e836ed2529648840afa44ce2dc3f095085e4"
+    },
+    {
+      "path": "test/login-binding-r8.test.mjs",
+      "gitBlob": "ea901e810351a3861b88ee24f3c60b6157e2b566"
+    },
+    {
+      "path": "test/operations-check-r12.test.mjs",
+      "gitBlob": "e355addbf82584b778a59867283b0d9b291b4e3b"
+    },
+    {
+      "path": "test/operations-report-r12.test.mjs",
+      "gitBlob": "21b3b7c48cd649b52fe08b7a4a6e5ac597b94855"
+    },
+    {
+      "path": "test/package-starter.test.mjs",
+      "gitBlob": "9e65416ddda4fb027a305e09c1807a07f330bad6"
+    },
+    {
+      "path": "test/policy-recovery-r10.test.mjs",
+      "gitBlob": "dccb182cc330ec1b8c8d6a1d1b0a4dc6349dfcfa"
+    },
+    {
+      "path": "test/r5.test.mjs",
+      "gitBlob": "cc584bfc31799d908f9e52e188e7c4388dd4661e"
+    },
+    {
+      "path": "test/resource-r8.test.mjs",
+      "gitBlob": "3042cac5ff81ab100349d9318ae7e538fa26964f"
+    },
+    {
+      "path": "test/restore-r10.test.mjs",
+      "gitBlob": "37988efdce0f297e61e9476703788a3e3147d62c"
+    },
+    {
+      "path": "test/session-device-r11.test.mjs",
+      "gitBlob": "fa9939fc7bd81498a8cf85cad5245392e6cec91d"
+    },
+    {
+      "path": "test/xdr-brute.test.mjs",
+      "gitBlob": "cadb7b66f888ecbc754bda88e96c6a3bbae4b1e4"
+    },
+    {
+      "path": "test/xdr-exfiltration.test.mjs",
+      "gitBlob": "b48414011e6ee3823dc9bb1e9510226094c009b6"
+    },
+    {
+      "path": "test/xdr-fixture-response.test.mjs",
+      "gitBlob": "131477a22b630f22248b9045437999a35b65c33b"
+    },
+    {
+      "path": "test/xdr-persistence.test.mjs",
+      "gitBlob": "e8b3fe52fc63fd99f88230b40398a4c84d86ede6"
+    },
+    {
+      "path": "test/xdr-privilege.test.mjs",
+      "gitBlob": "744cc410a90f08997ca61b44fc6a7aa97a3e29c9"
+    },
+    {
+      "path": "test/xdr-request-guard.test.mjs",
+      "gitBlob": "12b7ad590eb2cc717a93ba24d8f30e25fdf1d530"
+    },
+    {
+      "path": "test/xdr-run.test.mjs",
+      "gitBlob": "21ca21caf01ab91f8ddd45dedf5bf1ba0e14dd0a"
+    },
+    {
+      "path": "test/xdr-web.test.mjs",
+      "gitBlob": "1f9fecf78514f5e050665143736ef2f4d42d9af3"
+    },
+    {
+      "path": "vercel.json",
+      "gitBlob": "c9946daa21a070d4809cd24711e59d59f0a5f995"
+    },
+    {
+      "path": "xdr/alerts.log",
+      "gitBlob": "2645213ef656f57331e27522409bdc497f1cc5ae"
+    },
+    {
+      "path": "xdr/brute-force/decide.mjs",
+      "gitBlob": "7dce85447fc833718a9ca9c89fcbf18b1e94ff29"
+    },
+    {
+      "path": "xdr/brute-force/patterns.json",
+      "gitBlob": "c014add50e37453a39b92c45d64c026afded4c82"
+    },
+    {
+      "path": "xdr/brute-force/read-alerts.mjs",
+      "gitBlob": "c158a8bf20acce1d4a51e26b91e49447cd6f01f6"
+    },
+    {
+      "path": "xdr/brute-force/result.json",
+      "gitBlob": "fdd83d1493fb88b4902a0ea86e948487b882d517"
+    },
+    {
+      "path": "xdr/deny-rules.json",
+      "gitBlob": "5115d680e55c83bc2b73f9d1e85aed25b28274da"
+    },
+    {
+      "path": "xdr/exfiltration/decide.mjs",
+      "gitBlob": "2bbb85b640635a5f973ea467b198834b683219b3"
+    },
+    {
+      "path": "xdr/exfiltration/patterns.json",
+      "gitBlob": "d4f316787caf203243842cd079877811d2cadee0"
+    },
+    {
+      "path": "xdr/exfiltration/read-alerts.mjs",
+      "gitBlob": "9403f04c07ad0d1fb8b2b6ed4a92cc854f5a0b3b"
+    },
+    {
+      "path": "xdr/exfiltration/respond.mjs",
+      "gitBlob": "417c908272f71e9d3e75eec0789930fd9bacc8e3"
+    },
+    {
+      "path": "xdr/exfiltration/result.json",
+      "gitBlob": "ece49dc62780f6014dda543d0c45d05272958229"
+    },
+    {
+      "path": "xdr/fixtures/brute-force.json",
+      "gitBlob": "5180c420756dd6e8d8b73ca8ccffe11926e4f754"
+    },
+    {
+      "path": "xdr/fixtures/exfiltration.json",
+      "gitBlob": "ccd294ff72eade41f13c350d69b05a42c346ba40"
+    },
+    {
+      "path": "xdr/fixtures/known-cve.json",
+      "gitBlob": "d0f444a98e457a579fbce613012485d49936b17c"
+    },
+    {
+      "path": "xdr/fixtures/persistence.json",
+      "gitBlob": "8dfb349b02cb0fd107a751c148be6165aa8c2725"
+    },
+    {
+      "path": "xdr/fixtures/privilege.json",
+      "gitBlob": "442fc3297bcc73969fa61b1368d08e0038b9c135"
+    },
+    {
+      "path": "xdr/fixtures/web-injection.json",
+      "gitBlob": "c1e6b7f2d226c5f85e09e026f726fdcb8fd7eff1"
+    },
+    {
+      "path": "xdr/known-cve/decide.mjs",
+      "gitBlob": "9ecdf2ac10b01e62c817c8a35fe4f539b57d443e"
+    },
+    {
+      "path": "xdr/known-cve/patterns.json",
+      "gitBlob": "fa6f84a7784900b19fe90d0a13a7935519c421c2"
+    },
+    {
+      "path": "xdr/known-cve/read-alerts.mjs",
+      "gitBlob": "0babd6ac13ad4accfe6ee18297fc16879b826c20"
+    },
+    {
+      "path": "xdr/known-cve/respond.mjs",
+      "gitBlob": "72fbaa4e3fb050891a75a98150adcff40f788b58"
+    },
+    {
+      "path": "xdr/known-cve/result.json",
+      "gitBlob": "97bd399ed5f90e3e65d756b485fd7b063bad68e7"
+    },
+    {
+      "path": "xdr/persistence/decide.mjs",
+      "gitBlob": "2739b491c455f1628bea752b587c4e8eabcb4f73"
+    },
+    {
+      "path": "xdr/persistence/patterns.json",
+      "gitBlob": "e99857179c669f4268168a715ed6430d0e73f41e"
+    },
+    {
+      "path": "xdr/persistence/read-alerts.mjs",
+      "gitBlob": "ec16bbaee4a07339be7142e39d601ffd2b4bad42"
+    },
+    {
+      "path": "xdr/persistence/respond.mjs",
+      "gitBlob": "acf1b4ee691287adda90296de74974859ba80453"
+    },
+    {
+      "path": "xdr/persistence/result.json",
+      "gitBlob": "5f12f5eca7764d6a80eec04605b82a1ec985a33c"
+    },
+    {
+      "path": "xdr/privilege/decide.mjs",
+      "gitBlob": "e5f3e7e74d588838d41698bfc07d0ca9dda7612b"
+    },
+    {
+      "path": "xdr/privilege/patterns.json",
+      "gitBlob": "a4fc79d0262340ac3477e7780beae82efe65d843"
+    },
+    {
+      "path": "xdr/privilege/read-alerts.mjs",
+      "gitBlob": "c3eb6c2ca8265e2452aad5ef604bb0270f853ac6"
+    },
+    {
+      "path": "xdr/privilege/respond.mjs",
+      "gitBlob": "72baf5f43f122c22b4e8579f84cef7b5079c1f1e"
+    },
+    {
+      "path": "xdr/privilege/result.json",
+      "gitBlob": "297d8102734b4e38699aceb3d52c0ba20fc4b1e8"
+    },
+    {
+      "path": "xdr/shared/decision.mjs",
+      "gitBlob": "46d638eb6d21ea4a9ac4aa81ddfb0108f7a6dd7b"
+    },
+    {
+      "path": "xdr/shared/integrate.mjs",
+      "gitBlob": "90ea44fa5cbd7b4056dbe1902e31d8168ab57b21"
+    },
+    {
+      "path": "xdr/shared/read-alerts.mjs",
+      "gitBlob": "b3690281b038b5a817b7778cf47b8f31db2a028a"
+    },
+    {
+      "path": "xdr/shared/request-guard.mjs",
+      "gitBlob": "c6d9e83162c75c6e8813d49c444300a327337574"
+    },
+    {
+      "path": "xdr/shared/respond-fixture.mjs",
+      "gitBlob": "e8829cb5b8682d73ff71aed8388f32a82846d06b"
+    },
+    {
+      "path": "xdr/web-injection/decide.mjs",
+      "gitBlob": "2f003aca99bed48749e4e4810a8e469bc044efa1"
+    },
+    {
+      "path": "xdr/web-injection/patterns.json",
+      "gitBlob": "289b5acbc57e24015382fb9fd9792f385a5fee7a"
+    },
+    {
+      "path": "xdr/web-injection/read-alerts.mjs",
+      "gitBlob": "a324afb812bbf783c15739fbb25bb8b940997577"
+    },
+    {
+      "path": "xdr/web-injection/result.json",
+      "gitBlob": "da206c02289d91e4d34860d58226695067180adb"
+    },
+    {
+      "path": "xdr/ztna-overlay.mjs",
+      "gitBlob": "a23eec54f6771f8630f11dd475e866e8e278bf31"
+    }
+  ]
+}

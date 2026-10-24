@@ -1,0 +1,12 @@
+{
+  "version": "gamst-review-2026-10-25",
+  "state": "검증 중",
+  "officialCourseReview": "19~21단계 통과 확인; 22단계 제출 예정",
+  "runtime": "Node.js v24.22.1",
+  "referenceRuntime": "Node.js 24.19.0 (미확인)",
+  "sourceRevision": "713c21ab77646e8bf6489a5708c9a974bb0fb093",
+  "sourceManifest": "GAMST_SOURCE_MANIFEST.json",
+  "actualIntegrations": "UNV: 실제 계정·AI 모델 호출·보안 조치 집행·OSV 조회",
+  "userReportedReproduction": "미확인",
+  "v1_0": false
+}
