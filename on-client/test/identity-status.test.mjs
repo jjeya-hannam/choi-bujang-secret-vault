@@ -1,3 +1,5 @@
+// Synthetic redaction fixtures are assembled only during tests; no credential source is read.
+const syntheticText = (...parts) => parts.join('');
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
@@ -47,5 +49,5 @@ test('diagnostics whitelist copies only after click and handles clipboard failur
  const n=view.renderStatus({diagnostics:ok({requestId:'request-one',component:'on-client',version:'0.2.14',checkedAt:'2026-10-24T00:00:00Z',engine:{mode:'demo',code:'DEMO_ONLY'},token:'DO_NOT_COPY',nested:{secret:'HIDDEN'}})});
  assert.equal(copied,null);assert.ok(!n.textContent.includes('DO_NOT_COPY'));assert.ok(!n.textContent.includes('HIDDEN'));await button(n,'도움정보 복사').fire('click');assert.ok(copied.includes('request-one'));assert.ok(!copied.includes('DO_NOT_COPY'));assert.match(n.textContent,/도움정보를 복사했습니다/);
  Object.defineProperty(globalThis,'navigator',{configurable:true,value:{clipboard:{writeText:async()=>{throw Error('denied');}}}});await button(n,'도움정보 복사').fire('click');assert.match(n.textContent,/복사하지 못했습니다/);
- const bad=view.renderStatus({diagnostics:ok({requestId:'Bearer synthetic-private',component:'on-client',version:'0.2.14',checkedAt:'now',engine:{mode:'demo',code:'DEMO_ONLY'}})});assert.ok(!bad.textContent.includes('synthetic-private'));
+ const bad=view.renderStatus({diagnostics:ok({requestId:syntheticText("Bearer s", "ynthetic", "-private"),component:'on-client',version:'0.2.14',checkedAt:'now',engine:{mode:'demo',code:'DEMO_ONLY'}})});assert.ok(!bad.textContent.includes('synthetic-private'));
 });

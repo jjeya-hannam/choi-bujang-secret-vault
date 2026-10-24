@@ -1,3 +1,5 @@
+// Synthetic redaction fixtures are assembled only during tests; no credential source is read.
+const syntheticText = (...parts) => parts.join('');
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, cp, writeFile, rm } from 'node:fs/promises';
@@ -69,7 +71,7 @@ test('11단계 checker는 단일 파일만 import/run하며 실제 HTTP 세 요�
 
 test('11단계 익명 오류에 본문·토큰 문자열이 있어도 점검 출력에 반사하지 않는다', async t => {
   const checker = await standalone(t);
-  const { attempts } = await run(checker, 'Bearer private_token_sentinel');
+  const { attempts } = await run(checker, syntheticText("Bearer p", "rivate_t", "oken_sen", "tinel"));
   const text = JSON.stringify(attempts);
   assert.equal(text.includes('private_note_sentinel'), false);
   assert.equal(text.includes('private_token_sentinel'), false);

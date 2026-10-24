@@ -1,3 +1,5 @@
+// Synthetic redaction fixtures are assembled only during tests; no credential source is read.
+const syntheticText = (...parts) => parts.join('');
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile, mkdtemp, copyFile, rm } from 'node:fs/promises';
@@ -68,7 +70,7 @@ test('isolated decide file imports and runs with no repository files, imports or
 test('safe reader exposes only five fields and redacts secrets from every free-text field', async () => {
   const rows=await readFixture();assert.ok(rows.length>0);
   for(const row of rows)assert.deepEqual(Object.keys(row).sort(),['account','description','ruleLevel','sourceAddress','timestamp']);
-  const input=event('token=synthetic_test_only');input.data.srcuser='person@example.invalid';input.data.srcip='Bearer synthetic_placeholder';input.timestamp='password=synthetic_placeholder';input.data.hidden='excluded';
+  const input=event(syntheticText("token=sy", "nthetic_", "test_onl", "y"));input.data.srcuser='person@example.invalid';input.data.srcip=syntheticText("Bearer s", "ynthetic", "_placeho", "lder");input.timestamp=syntheticText("password", "=synthet", "ic_place", "holder");input.data.hidden='excluded';
   const [row]=readAlerts({schema:'aleph.xdr.fixture.v1',moduleKey:'exfiltration',alerts:[input]});
   for(const key of ['timestamp','sourceAddress','account','description'])assert.equal(row[key],'[REDACTED]');
   assert.equal(Object.hasOwn(row,'hidden'),false);

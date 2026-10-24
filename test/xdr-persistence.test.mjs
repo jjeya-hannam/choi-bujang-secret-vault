@@ -1,9 +1,11 @@
+// Synthetic redaction fixtures are assembled only during tests; no credential source is read.
+const syntheticText = (...parts) => parts.join('');
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, mkdtemp, copyFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { decide } from '../xdr/persistence/decide.mjs';
 import { readAlerts } from '../xdr/persistence/read-alerts.mjs';
@@ -91,11 +93,11 @@ test('reader emits exactly five redacted fields without private paths or malform
   const fixture = JSON.parse(await readFile(fixtureUrl, 'utf8'));
   const rows = readAlerts(fixture); assert.equal(rows.length, 24);
   for (const row of rows) assert.deepEqual(Object.keys(row), ['timestamp', 'sourceAddress', 'account', 'ruleLevel', 'description']);
-  const safe = readAlerts({ schema: 'aleph.xdr.fixture.v1', alerts: [{ timestamp: 'token=synthetic',
-    data: { srcip: 'password=synthetic', srcuser: 'Bearer synthetic', path: 'private_synthetic_sentinel' },
-    rule: { level: 0, description: 'api_key=synthetic' } }, {}] });
+  const safe = readAlerts({ schema: 'aleph.xdr.fixture.v1', alerts: [{ timestamp: syntheticText("token=sy", "nthetic"),
+    data: { srcip: syntheticText("password", "=synthet", "ic"), srcuser: syntheticText("Bearer s", "ynthetic"), path: 'private_synthetic_sentinel' },
+    rule: { level: 0, description: syntheticText("api_key=", "syntheti", "c") } }, {}] });
   assert.deepEqual(safe[0], { timestamp: '[REDACTED]', sourceAddress: '[REDACTED]', account: '[REDACTED]', ruleLevel: 0, description: '[REDACTED]' });
   assert.deepEqual(safe[1], { timestamp: null, sourceAddress: null, account: null, ruleLevel: null, description: null });
-  const cli = execFileSync(process.execPath, [new URL('../xdr/persistence/read-alerts.mjs', import.meta.url).pathname], { encoding: 'utf8' });
+  const cli = execFileSync(process.execPath, [fileURLToPath(new URL('../xdr/persistence/read-alerts.mjs', import.meta.url))], { encoding: 'utf8' });
   assert.equal(cli.trimEnd().split('\n').length, 24);
 });

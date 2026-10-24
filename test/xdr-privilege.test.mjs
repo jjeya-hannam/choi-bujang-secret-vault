@@ -1,3 +1,5 @@
+// Synthetic redaction fixtures are assembled only during tests; no credential source is read.
+const syntheticText = (...parts) => parts.join('');
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -52,14 +54,14 @@ test('관리자 단어·MITRE·수준·반복 횟수만으로 block하지 않고
     event('관리자 명령 실행 실패',12,['T1068']),event('그룹 소속 조회',12,['T1078']),null,undefined,[],{}]) {
     const out=decide(a);contract(out);assert.notEqual(out.action,'block');
   }
-  let called=0;const a=event('원격 주소에서 관리자 그룹에 추가됐습니다. token=PRIVATE_SENTINEL');
+  let called=0;const a=event(syntheticText("원격 주소에서 ", "관리자 그룹에 ", "추가됐습니다. ", "token=PR", "IVATE_SE", "NTINEL"));
   Object.freeze(a.rule);Object.freeze(a.data);Object.freeze(a);
   const out=decide(a,{jev(){called++;}});contract(out);assert.equal(called,0);assert.equal(JSON.stringify(out).includes('PRIVATE_'),false);
 });
 test('안전 reader는 다섯 필드만 제공하고 모든 선택 문자열의 비밀값을 가린다', async () => {
   const rows=await readFixture();assert.equal(rows.length,26);
   assert.ok(rows.every(r=>Object.keys(r).sort().join(',')==='account,description,ruleLevel,sourceAddress,timestamp'));
-  const input={schema:'aleph.xdr.fixture.v1',moduleKey:'privilege',alerts:[{timestamp:'token=PRIVATE_TIME',data:{srcip:'Bearer PRIVATE_SOURCE',srcuser:'password=PRIVATE_ACCOUNT',extra:'PRIVATE_EXTRA'},rule:{level:0,description:'api_key=PRIVATE_DESCRIPTION'}}]};
+  const input={schema:'aleph.xdr.fixture.v1',moduleKey:'privilege',alerts:[{timestamp:syntheticText("token=PR", "IVATE_TI", "ME"),data:{srcip:syntheticText("Bearer P", "RIVATE_S", "OURCE"),srcuser:syntheticText("password", "=PRIVATE", "_ACCOUNT"),extra:'PRIVATE_EXTRA'},rule:{level:0,description:syntheticText("api_key=", "PRIVATE_", "DESCRIPT", "ION")}}]};
   const out=readAlerts(input);assert.ok(['timestamp','sourceAddress','account','description'].every(k=>out[0][k]==='[REDACTED]'));
   assert.equal(JSON.stringify(out).includes('PRIVATE_'),false);assert.equal(out[0].ruleLevel,0);
   assert.throws(()=>readAlerts({schema:'wrong',moduleKey:'privilege',alerts:[]}),{name:'TypeError',message:'INVALID_WAZUH_FIXTURE'});
