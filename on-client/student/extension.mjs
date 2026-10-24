@@ -152,14 +152,14 @@ export function createStudentView() {
         add('p', '조회 결과 확인 불가. 제공 화면에서 직접 다시 조회하세요.'); return root;
       }
       add('p', scans[data.status]);
-      add('p', `lockfileVersion: ${text(data.lockfileVersion)}`);
-      add('p', `lockfileHash: ${text(data.lockfileHash)}`);
-      add('p', `조회 시각: ${text(data.checkedAt)}`);
+      if (data.lockfileVersion != null) add('p', `lockfileVersion: ${text(data.lockfileVersion)}`);
+      if (data.lockfileHash != null) add('p', `lockfileHash: ${text(data.lockfileHash)}`);
+      if (data.checkedAt != null) add('p', `조회 시각: ${text(data.checkedAt)}`);
       if (!Array.isArray(data.packages) || data.packages.length === 0) {
         add('p', '표시할 패키지 조회 결과가 없습니다. 미조회·설정 없음·확인 불가는 취약점 없음의 근거가 아닙니다.');
         return root;
       }
-      const states = { known_vulnerabilities: '알려진 항목 있음', none_found: '알려진 항목 없음', unverifiable: '조회 확인 불가' };
+      const states = { known_vulnerabilities: '알려진 항목 있음', none_found: '조회 범위에서 알려진 항목 없음', unverifiable: '조회 확인 불가' };
       const list = add('ul', '');
       for (const item of data.packages) {
         const row = add('li', '', list);
@@ -170,8 +170,8 @@ export function createStudentView() {
         const inconsistent = item.status === 'none_found' && findings.length > 0;
         const label = inconsistent ? '상태와 조회 항목 불일치·확인 불가' : Object.hasOwn(states, item.status) ? states[item.status] : '조회 확인 불가';
         add('p', `상태: ${label} (${text(item.status)})`, row);
-        add('p', `출처: ${text(item.source)}`, row);
-        add('p', `조회 시각: ${text(item.checkedAt)}`, row);
+        if (item.source != null) add('p', `출처: ${text(item.source)}`, row);
+        if (item.checkedAt != null) add('p', `조회 시각: ${text(item.checkedAt)}`, row);
         if (item.status === 'unverifiable' && findings.length > 0) add('p', '일부 확인·전체 조회 확인 불가', row);
         for (const finding of findings) add('p', `취약점 ID: ${text(finding.id)} · 수정 시각(modified): ${text(finding.modified)}`, row);
       }

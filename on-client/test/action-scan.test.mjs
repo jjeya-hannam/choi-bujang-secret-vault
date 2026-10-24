@@ -65,3 +65,11 @@ test('markup is inert text and safe errors remain visible',()=>{
  assert.ok(root.textContent.includes(payload));assert.equal(walk(root).filter(n=>n.tagName==='IMG').length,0);
  }
 });
+
+
+test('scan omits absent metadata and qualifies none_found by lookup scope',()=>{
+ const empty=render('renderVulnerabilities',{status:'ok',data:{status:'not_configured',packages:[]}}).textContent;
+ for(const absent of ['lockfileVersion:','lockfileHash:','조회 시각:'])assert.ok(!empty.includes(absent));
+ const clean=render('renderVulnerabilities',{status:'ok',data:{...scan,status:'complete',packages:[{...scan.packages[0],status:'none_found',vulnerabilities:[]}]}}).textContent;
+ assert.ok(clean.includes('조회 범위에서 알려진 항목 없음'));assert.ok(clean.includes('none_found'));
+});
