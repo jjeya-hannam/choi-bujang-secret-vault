@@ -53,3 +53,18 @@
 ## 22단계 최종 기록
 
 현재 기준 커밋·제품 manifest·환경·절차·단계별 누적 관찰·데이터 보존 계획은 GAMST_FINAL_HANDOVER.md 및 GAMST_SOURCE_MANIFEST.json을 참조합니다. 사용자 직접 확인 표는 변경하지 않았습니다. 과거 기록의 source SHA는 당시 파일의 줄바꿈을 포함한 값이며 서로 다른 파일 원문·커밋을 같은 최종 관찰로 합치지 않습니다.
+
+
+## 실제 22단계 제출 커밋 재현 결과 (기록 보완)
+
+- 실제 제출·검증 커밋: aa565ce167b438caac16b365c1a0594e11cfd233
+- 브랜치: main; 새 clone의 분리 HEAD가 위40자리와 같음
+- 확인 시각(KST): 2026-10-25 01:32:48
+- 환경: Windows, PowerShell7.6.5, Git2.53.0.windows.3, Nodev24.22.1
+- GAMST_SOURCE_MANIFEST.json의 제품 파일171개 Git blob 모두 일치, 불일치0
+- 문법 정상. 학생 앱 모의40개·관련 기존 모의29개 통과, 실패0
+- 로컬 예제200, 연결 없음503/ENGINE_NOT_CONNECTED, 취약점not_configured. 예제→연결 없음→예제 순으로 종료·재실행.
+- 응답 학생 모듈과 체크아웃 SHA-256 일치, 새 clone git status 깨끗함
+- 브라우저·학생 직접 확인·실제 모델·집행·OSV는 미확인/UNV. 사용자13~21 확인표는 변경하지 않음
+
+상세 단계별 관찰·명령·원인·데이터 보존 계획은 GAMST_FINAL_HANDOVER.md의 실제 제출 커밋 표와 연결합니다. 이번 변경은 이 실제 관찰 결과를 제출 원문 안에 반영하는 기록 보완이며 실행 원문을 바꾸지 않습니다.

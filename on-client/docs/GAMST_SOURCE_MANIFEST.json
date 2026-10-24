@@ -1,7 +1,7 @@
 {
   "version": "gamst-review-2026-10-25",
   "state": "검증 중",
-  "sourceRevision": "713c21ab77646e8bf6489a5708c9a974bb0fb093",
+  "sourceRevision": "aa565ce167b438caac16b365c1a0594e11cfd233",
   "scope": "tracked non-Markdown files outside docs; documentation and execution records excluded to avoid self-reference",
   "manifestSha256": "88dfdfecfbbcfe6f599b4dfdf69767271f53b1cd6cbd381ddb5c5324a59cafc8",
   "studentCanonicalSha256": "b1e4f7981c5db455bb397859aba54527b0099817620d04f20f6ee86cb84f0d1f",
@@ -690,5 +690,6 @@
       "path": "xdr/ztna-overlay.mjs",
       "gitBlob": "a23eec54f6771f8630f11dd475e866e8e278bf31"
     }
-  ]
+  ],
+  "reproductionCheckedAt": "2026-10-24T16:32:48.889Z"
 }

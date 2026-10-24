@@ -6,14 +6,26 @@
 
 - 저장소 URL: https://github.com/jjeya-hannam/choi-bujang-secret-vault
 - 브랜치: main
-- 새 폴더에 받은 기준 커밋: 713c21ab77646e8bf6489a5708c9a974bb0fb093
-- 확인 시각(KST): 2026-10-25 01:28:32
+- 실제 22단계 제출 후 새 폴더에서 재현 확인한 커밋: aa565ce167b438caac16b365c1a0594e11cfd233
+- 선행 코드 기준 커밋: 713c21ab77646e8bf6489a5708c9a974bb0fb093 (최종 결과를 대신하지 않는 이력)
+- 실제 제출 커밋 재현 확인 시각(KST): 2026-10-25 01:32:48
 - 실제 작업 위치: qk/work/gamst-release-reproduction (기존 outputs/gamst와 다른 빈 폴더)
 - 제품 소스·설정·검사·자료 171개 Git blob 결속 SHA-256: 88dfdfecfbbcfe6f599b4dfdf69767271f53b1cd6cbd381ddb5c5324a59cafc8
 - 학생 함수 파일의 LF 정규화 SHA-256: b1e4f7981c5db455bb397859aba54527b0099817620d04f20f6ee86cb84f0d1f
-- 체크아웃 파일 원문 SHA-256: 272d80d71a9d4721d33f50aec5da4e2d6daa5277f926cb7920f48b1673f2eb10. Windows Git의 줄바꿈 변환으로 LF 정규화 값과 다를 수 있으며 서버가 반환한 모듈은 그 체크아웃 원문과 일치했습니다.
+- 실제 제출 커밋 체크아웃 파일 원문 SHA-256: 272d80d71a9d4721d33f50aec5da4e2d6daa5277f926cb7920f48b1673f2eb10. Windows Git의 줄바꿈 변환으로 LF 정규화 값과 다를 수 있으며 서버가 반환한 모듈은 그 체크아웃 원문과 일치했습니다.
 
-실행 기록 파일 자체에 자기 커밋 해시를 넣을 수 없으므로 코드·설정·검사·자료의 Git blob 목록을 GAMST_SOURCE_MANIFEST.json에 고정했습니다. 이번 최종 기록 커밋에서는 문서·버전 기록만 추가하며 제품 원문은 바꾸지 않습니다. 이 기록을 포함한 최종 커밋을 새 폴더에 다시 받아 제출 전에 같은 manifest와 검사 결과를 재확인하고 실제 최종 40자리 커밋은 포털 제출·외부 결과 기록에 남깁니다. 서로 다른 코드의 과거 통과를 합쳐 전체 실행 성공으로 계산하지 않습니다.
+실제 22단계 제출 커밋 aa565ce167b438caac16b365c1a0594e11cfd233을 새 clone 폴더에서 git switch --detach로 선택한 뒤 재현을 확인했습니다. 제출 전 수행한 결과는 아래와 같습니다. 기존 외부 결과를 이번 문서 본문에 그대로 연결합니다.
+
+- git rev-parse HEAD: aa565ce167b438caac16b365c1a0594e11cfd233
+- 제품 manifest: 171개 Git blob 모두 일치, 불일치0
+- node --check student/extension.mjs: 정상
+- 학생 앱 합성 검사40개 통과·0실패, 관련 이전 합성 검사29개 통과·0실패
+- 예제→연결 없음→예제 재시작 및 HTTP 관찰: 아래 단계별 표와 일치
+- 서버가 반환한 학생 모듈 SHA-256과 체크아웃 파일 원문: 일치
+- git status --porcelain: 빈 결과, 미커밋 변경 없음
+- 브라우저·학생 직접 확인·실제 연동: 미확인/UNV 유지
+
+이번 재제출은 위 실제 제출 커밋의 검증 결과를 문서에 반영하는 기록 보완입니다. 실행 코드·설정·검사·자료의 Git blob은 위 커밋과 동일하며 GAMST_SOURCE_MANIFEST.json으로 대조합니다. 이전 코드의 통과를 합쳐 실행 성공으로 계산하지 않습니다. 후속 문서 커밋의 제품 원문도 같은 manifest와 새 폴더 검사로 제출 전에 다시 확인합니다.
 
 ## 환경과 실제 절차
 
@@ -22,7 +34,7 @@ Windows / PowerShell 7.6.5 / Git 2.53.0.windows.3 / Node.js v24.22.1. package.js
 실제로 실행한 순서:
 
 1. git clone --no-checkout으로 위 공개 저장소를 새 빈 폴더에 받았습니다.
-2. git switch --detach 713c21ab77646e8bf6489a5708c9a974bb0fb093로 정확한 커밋을 선택하고 git rev-parse HEAD와 git status --short로 대상과 깨끗한 작업 상태를 확인했습니다.
+2. git switch --detach aa565ce167b438caac16b365c1a0594e11cfd233로 실제 제출 커밋을 선택하고 git rev-parse HEAD와 git status --short로 대상과 깨끗한 작업 상태를 확인했습니다.
 3. on-client에서 node --check student/extension.mjs 및 node --test test/*.test.mjs를 실행해 문법 정상·40개 통과를 확인했습니다.
 4. 저장소 최상위에서 수정된 기존 마스킹·점검 검사5개 파일을 node --test로 실행해29개 통과를 확인했습니다.
 5. on-client에서 node src/server.mjs --demo, node src/server.mjs, node src/server.mjs --demo 순서로 서버를 시작·종료했습니다. 개인 ON_* 설정을 상속하지 않은 하위 프로세스에 ON_PORT=5190만 지정했습니다. 각 서버는127.0.0.1에만 수신하며 점검 후 직접 시작한 프로세스만 종료했습니다.
@@ -31,7 +43,7 @@ Windows / PowerShell 7.6.5 / Git 2.53.0.windows.3 / Node.js v24.22.1. package.js
 
 ## 13~21 누적 관찰
 
-모든 행의 확인 시각은 2026-10-25 01:28:32 KST이며 결과는 같은 기준 제품 원문에 대한 관찰입니다. 사용자 직접 확인표는 GAMST_REPRODUCTION.md에서 미확인으로 유지합니다.
+모든 행의 확인 시각은 2026-10-25 01:32:48 KST이며 결과는 실제 제출 커밋 aa565ce167b438caac16b365c1a0594e11cfd233의 같은 제품 원문에 대한 관찰입니다. 사용자 직접 확인표는 GAMST_REPRODUCTION.md에서 미확인으로 유지합니다.
 
 | 단계 | 기능 | 에이전트 결과 | 근거 | 실제 연결·미확인 원인 |
 |---|---|---|---|---|
