@@ -10,9 +10,10 @@
     "test": "node --test test/*.test.mjs",
     "package:portable": "node tools/package-portable.mjs",
     "student": "node student/pc-server.mjs",
-    "student:demo": "node student/pc-server.mjs --demo"
+    "student:demo": "node student/pc-server.mjs --demo",
+    "environment:check": "node tools/check-environment.mjs"
   },
   "engines": {
-    "node": "24.19.0"
+    "node": ">=24.19.0 <25"
   }
 }

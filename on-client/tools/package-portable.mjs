@@ -63,7 +63,7 @@ export async function packagePortable({ source = fileURLToPath(new URL('../', im
       } else if (stat.isFile() && extensions.test(path)) files.push(path);
     }
     for (const path of roots) await collect(path);
-    files.push('package.json', 'tools/start-portable.cmd', 'tools/start-portable.sh');
+    files.push('package.json', 'tools/start-portable.cmd', 'tools/start-portable.sh', 'tools/check-environment.mjs');
     if (await exists(resolve(source, 'tools/create-shortcut.ps1'))) files.push('tools/create-shortcut.ps1');
     if (!['src/server.mjs', 'student/extension.mjs', 'student/pc-server.mjs', 'student/pc-status.mjs', 'student/pc-view.mjs'].every(path => files.includes(path))) fail('PACKAGE_SOURCE_INCOMPLETE');
     const entries = [];
@@ -85,11 +85,11 @@ export async function packagePortable({ source = fileURLToPath(new URL('../', im
       if (!/\.(?:webp|png|ico)$/i.test(path) && secret.test(bytes.toString('utf8'))) fail('PACKAGE_SECRET_PATTERN_REJECTED');
       entries.push({ path, bytes, mode: path.endsWith('.sh') ? 0o755 : 0o644 });
     }
-    const run = Buffer.from('# Student source bundle\n\nThis is not an approved course runtime or final submission package.\nRequires Node.js 24.19.0 installed separately. No administrator rights are needed.\n\nExtract source-app.tar.gz into a new folder. In on-client, run:\n\n  node student/pc-server.mjs --demo\n\nOpen http://127.0.0.1:5189. Security lesson data is synthetic; click the local PC read button for real CPU, memory, disk and interface counts. Windows-only observations remain unknown on other platforms. For disconnected mode run node student/pc-server.mjs. Stop with Ctrl+C.\nWindows: double-click tools/start-portable.cmd. macOS: sh tools/start-portable.sh. Both launch demo mode and require installed Node.js.\nOn Windows, run tools/create-shortcut.ps1 from PowerShell to create a current-user desktop shortcut; existing shortcuts are not overwritten. Windows execution is not verified here. These launchers are not an installer or approved course host. Account/AI credentials are not included.\nThe existing server binds only to 127.0.0.1. No security settings are changed.\n');
+    const run = Buffer.from('# Student source bundle\n\nThis is not an approved course runtime or final submission package.\nRequires Node.js 24.19.0 or a later Node.js 24.x installed separately. Run npm run environment:check before starting. No administrator rights are needed.\n\nExtract source-app.tar.gz into a new folder. In on-client, run:\n\n  node student/pc-server.mjs --demo\n\nOpen http://127.0.0.1:5189. Security lesson data is synthetic; click the local PC read button for real CPU, memory, disk and interface counts. Windows-only observations remain unknown on other platforms. For disconnected mode run node student/pc-server.mjs. Stop with Ctrl+C.\nWindows: double-click tools/start-portable.cmd. macOS: sh tools/start-portable.sh. Both launch demo mode and require installed Node.js.\nOn Windows, run tools/create-shortcut.ps1 from PowerShell to create a current-user desktop shortcut; existing shortcuts are not overwritten. Windows execution is not verified here. These launchers are not an installer or approved course host. Account/AI credentials are not included.\nThe existing server binds only to 127.0.0.1. No security settings are changed.\n');
     entries.push({ path: 'SOURCE_RUN.md', bytes: run, mode: 0o644 });
     const tar = Buffer.concat([...entries.map(e => tarEntry('on-client/' + e.path, e.bytes, e.mode)), Buffer.alloc(1024)]);
     const archive = gzipSync(tar, { level: 9 });
-    const manifest = { format: 'student-portable-source.v1', approvedCourseRuntime: false, nodeRequired: '24.19.0', sourceRevision: revision(source), includedCredentials: false,
+    const manifest = { format: 'student-portable-source.v1', approvedCourseRuntime: false, nodeRequired: '>=24.19.0 <25', referenceNode: '24.19.0', sourceRevision: revision(source), includedCredentials: false,
       credentialPolicy: 'known private paths and credential patterns excluded; manual source review required',
       archive: { name: 'source-app.tar.gz', bytes: archive.length, sha256: sha256(archive) },
       exclusions: ['.env and .env.example', 'credentials and databases', 'logs', 'Git', 'node_modules', 'outputs', 'test and developer docs'],
