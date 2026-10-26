@@ -12,7 +12,7 @@ async function fixture(t) {
   t.after(() => rm(root, { recursive: true, force: true }));
   const source = resolve(root, 'source'); await mkdir(source);
   for (const dir of ['public', 'src', 'vendor', 'student', 'tools']) await mkdir(resolve(source, dir));
-  for (const [name, content] of Object.entries({ 'package.json': '{"type":"module"}', 'src/server.mjs': 'export const demo = true;', 'student/extension.mjs': 'export function createStudentView() {}', 'public/index.html': '<p>demo</p>', 'vendor/a.mjs': '// public helper', 'tools/start-portable.cmd': '@echo demo', 'tools/start-portable.sh': '#!/bin/sh\necho demo' })) await writeFile(resolve(source, name), content);
+  for (const [name, content] of Object.entries({ 'package.json': '{"type":"module"}', 'src/server.mjs': 'export const demo = true;', 'student/extension.mjs': 'export function createStudentView() {}', 'student/pc-server.mjs': '// student server', 'student/pc-status.mjs': '// read only', 'student/pc-view.mjs': '// view', 'public/index.html': '<p>demo</p>', 'vendor/a.mjs': '// public helper', 'tools/start-portable.cmd': '@echo demo', 'tools/start-portable.sh': '#!/bin/sh\necho demo' })) await writeFile(resolve(source, name), content);
   return { root, source, out: resolve(root, 'bundle') };
 }
 function unpack(bytes) {
@@ -78,4 +78,11 @@ test('credential-like source literals with known key prefixes are rejected', asy
     await assert.rejects(packagePortable(f), /PACKAGE_SECRET_PATTERN_REJECTED/);
     assert.deepEqual(await readdir(f.root), ['source']);
   }
+});
+
+test('bundle refuses a missing PC runtime used by its launchers', async t => {
+  const f = await fixture(t);
+  await rm(resolve(f.source, 'student/pc-server.mjs'));
+  await assert.rejects(packagePortable(f), /PACKAGE_SOURCE_INCOMPLETE/);
+  assert.deepEqual(await readdir(f.root), ['source']);
 });

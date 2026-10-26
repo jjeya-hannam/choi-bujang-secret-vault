@@ -64,7 +64,8 @@ export async function packagePortable({ source = fileURLToPath(new URL('../', im
     }
     for (const path of roots) await collect(path);
     files.push('package.json', 'tools/start-portable.cmd', 'tools/start-portable.sh');
-    if (!files.includes('src/server.mjs') || !files.includes('student/extension.mjs')) fail('PACKAGE_SOURCE_INCOMPLETE');
+    if (await exists(resolve(source, 'tools/create-shortcut.ps1'))) files.push('tools/create-shortcut.ps1');
+    if (!['src/server.mjs', 'student/extension.mjs', 'student/pc-server.mjs', 'student/pc-status.mjs', 'student/pc-view.mjs'].every(path => files.includes(path))) fail('PACKAGE_SOURCE_INCOMPLETE');
     const entries = [];
     let total = 0;
     for (const path of files.sort()) {
@@ -84,7 +85,7 @@ export async function packagePortable({ source = fileURLToPath(new URL('../', im
       if (!/\.(?:webp|png|ico)$/i.test(path) && secret.test(bytes.toString('utf8'))) fail('PACKAGE_SECRET_PATTERN_REJECTED');
       entries.push({ path, bytes, mode: path.endsWith('.sh') ? 0o755 : 0o644 });
     }
-    const run = Buffer.from('# Student source bundle\n\nThis is not an approved course runtime or final submission package.\nRequires Node.js 24.19.0 installed separately. No administrator rights are needed.\n\nExtract source-app.tar.gz into a new folder. In on-client, run:\n\n  node src/server.mjs --demo\n\nOpen http://127.0.0.1:5189. Demo values are synthetic. For disconnected mode run node src/server.mjs. Stop with Ctrl+C.\nWindows: double-click tools/start-portable.cmd. macOS: sh tools/start-portable.sh. Both launch demo mode and require installed Node.js.\nThese launchers are not a native shortcut, installer, or approved host. Account/AI credentials are not included.\nThe existing server binds only to 127.0.0.1. No security settings are changed.\n');
+    const run = Buffer.from('# Student source bundle\n\nThis is not an approved course runtime or final submission package.\nRequires Node.js 24.19.0 installed separately. No administrator rights are needed.\n\nExtract source-app.tar.gz into a new folder. In on-client, run:\n\n  node student/pc-server.mjs --demo\n\nOpen http://127.0.0.1:5189. Security lesson data is synthetic; click the local PC read button for real CPU, memory, disk and interface counts. Windows-only observations remain unknown on other platforms. For disconnected mode run node student/pc-server.mjs. Stop with Ctrl+C.\nWindows: double-click tools/start-portable.cmd. macOS: sh tools/start-portable.sh. Both launch demo mode and require installed Node.js.\nOn Windows, run tools/create-shortcut.ps1 from PowerShell to create a current-user desktop shortcut; existing shortcuts are not overwritten. Windows execution is not verified here. These launchers are not an installer or approved course host. Account/AI credentials are not included.\nThe existing server binds only to 127.0.0.1. No security settings are changed.\n');
     entries.push({ path: 'SOURCE_RUN.md', bytes: run, mode: 0o644 });
     const tar = Buffer.concat([...entries.map(e => tarEntry('on-client/' + e.path, e.bytes, e.mode)), Buffer.alloc(1024)]);
     const archive = gzipSync(tar, { level: 9 });

@@ -7,7 +7,7 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-echo Student demo source app. This is not an approved course runtime.
+echo Student local PC dashboard. Security lesson data is demo; PC measurements are real and manual.
 echo Open http://127.0.0.1:5189 and stop with Ctrl+C.
-node src/server.mjs --demo
+node student/pc-server.mjs --demo
 pause

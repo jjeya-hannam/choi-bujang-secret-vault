@@ -2,6 +2,8 @@
 // 제공 UI를 받은 것만으로 단계 완료를 인정하지 않습니다.
 export function createStudentView({ api, onChange } = {}) {
   let viewGeneration = 0;
+  let pcCancel = null;
+  const pcHistory = [];
   const views = {
     renderIdentity({ me = {}, devices = {}, sessions = {} } = {}) {
       const root = document.createElement('section');
@@ -105,9 +107,27 @@ export function createStudentView({ api, onChange } = {}) {
         if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/.test(value) && Number.isFinite(Date.parse(value))) add('p', `원천 확인 시각: ${value}`, parent);
       };
       const names = { compliant: '보안 기준 충족', noncompliant: '보안 기준 미충족', unknown: '확인 불가', active: '활성', expired: '만료', revoked: '철회됨' };
+      const pcSlot = add('section', ''); pcSlot.setAttribute('aria-label', '학생 PC 실측 · 별도 조회');
+      add('h3', '내 PC 상태 · 읽기 전용', pcSlot);
+      add('p', '수동 조회를 누르면 이 앱 실행 PC의 값만 읽습니다. 예제 보안 기록·SDP 연결 여부와 별개입니다.', pcSlot);
+      const pcButton = add('button', '내 PC 상태 조회', pcSlot); pcButton.type = 'button'; pcButton.setAttribute('class', 'btn');
+      const pcMessage = add('p', '아직 PC 상태를 조회하지 않았습니다. 기존 제공 서버에서는 이 기능을 확인할 수 없습니다.', pcSlot); pcMessage.setAttribute('role', 'status');
+      let pcOpening = false;
+      pcButton.addEventListener('click', async () => {
+        if (pcOpening || !root.isConnected) return;
+        const generation = viewGeneration; pcOpening = true; pcButton.disabled = true; pcMessage.textContent = '학생 PC 조회 도구를 불러오는 중입니다.';
+        try {
+          const { createPcPanel } = await import('./pc-view.mjs');
+          if (!root.isConnected || generation !== viewGeneration) return;
+          const panel = createPcPanel({ history: pcHistory, isCurrent: () => root.isConnected && generation === viewGeneration });
+          pcCancel = panel.cancel; pcSlot.replaceChildren(panel.element); await panel.refresh();
+        } catch {
+          if (root.isConnected && generation === viewGeneration) pcMessage.textContent = '확인 불가: 학생 PC 조회 도구가 없습니다. 학생 PC 실행기를 사용하거나 기존 기능을 계속 사용하세요.';
+        } finally { pcOpening = false; if (root.isConnected) pcButton.disabled = false; }
+      });
       add('h3', '보호 현황');
       showMode(mode, root);
-      add('p', '원천이 제공한 기기·세션·보안 기록만 표시합니다. PC 자원 사용률과 전체 보안 상태는 수집하지 않았습니다.');
+      add('p', '아래는 원천이 제공한 기기·세션·보안 기록입니다. 위의 별도 PC 조회가 성공해도 전체 보안 상태나 SDP 연결 성공을 뜻하지 않습니다.');
       const grid = add('div', '');
       grid.setAttribute('class', 'grid-2');
       const card = (key, title) => {
@@ -510,6 +530,7 @@ export function createStudentView({ api, onChange } = {}) {
   };
   // Any new host render invalidates pending auxiliary reads from an older view.
   return Object.fromEntries(Object.entries(views).map(([name, render]) => [name, function (...args) {
+    pcCancel?.(); pcCancel = null;
     viewGeneration += 1;
     return render.apply(this, args);
   }]));
