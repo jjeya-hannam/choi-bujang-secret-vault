@@ -65,6 +65,7 @@ export async function packagePortable({ source = fileURLToPath(new URL('../', im
     for (const path of roots) await collect(path);
     files.push('package.json', 'tools/start-portable.cmd', 'tools/start-portable.sh', 'tools/check-environment.mjs');
     if (await exists(resolve(source, 'tools/create-shortcut.ps1'))) files.push('tools/create-shortcut.ps1');
+    if (await exists(resolve(source, 'docs/FINAL_HANDOFF.md'))) files.push('docs/FINAL_HANDOFF.md');
     if (!['src/server.mjs', 'student/extension.mjs', 'student/pc-server.mjs', 'student/pc-status.mjs', 'student/pc-view.mjs'].every(path => files.includes(path))) fail('PACKAGE_SOURCE_INCOMPLETE');
     const entries = [];
     let total = 0;
@@ -92,7 +93,7 @@ export async function packagePortable({ source = fileURLToPath(new URL('../', im
     const manifest = { format: 'student-portable-source.v1', approvedCourseRuntime: false, nodeRequired: '>=24.19.0 <25', referenceNode: '24.19.0', sourceRevision: revision(source), includedCredentials: false,
       credentialPolicy: 'known private paths and credential patterns excluded; manual source review required',
       archive: { name: 'source-app.tar.gz', bytes: archive.length, sha256: sha256(archive) },
-      exclusions: ['.env and .env.example', 'credentials and databases', 'logs', 'Git', 'node_modules', 'outputs', 'test and developer docs'],
+      exclusions: ['.env and .env.example', 'credentials and databases', 'logs', 'Git', 'node_modules', 'outputs', 'test and developer docs except the fixed final handoff guide'],
       files: entries.map(e => ({ path: e.path, bytes: e.bytes.length, sha256: sha256(e.bytes) })) };
     stage = await mkdtemp(resolve(parent, '.portable-stage-'));
     await writeFile(resolve(stage, 'source-app.tar.gz'), archive, { flag: 'wx', mode: 0o600 });
