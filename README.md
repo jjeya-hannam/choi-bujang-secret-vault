@@ -228,3 +228,8 @@ xdr/shared/request-guard.mjs는 서버가 제공하는 출발 주소 확인·애
 ### gamst 최종 인수인계 · 검증 중
 
 버전 gamst-review-2026-10-25. [동일 소스의 새 폴더 실행·누적 관찰·데이터 보존 계획](on-client/docs/GAMST_FINAL_HANDOVER.md), [제품 원문 manifest](on-client/docs/GAMST_SOURCE_MANIFEST.json), [지원 범위·버전 기록](on-client/docs/GAMST_RELEASE.json)을 함께 봅니다. 실제 연동·사용자 직접 확인 미완료를 원문 검토 수료와 구분하며 v1.0으로 표시하지 않습니다.
+
+
+## 완성본 학생 영역 보완 · 검증 중
+
+관제 카드 4개와 수동 기기·세션 보조 조회, 출처·미조회·실패 안내를 추가했습니다. 기존 보호·AI·조치 렌더 7개 본문과 제공 서버·공통 CSS·인증을 보존했습니다. 전체 57개 시험과 로컬 예제 브라우저를 확인했습니다. 학생용 소스 포장 도구는 공식 승인 패키지를 대신하지 않습니다. 현재 검증 환경은 macOS/Node22이며 Windows·PC 실측·공식 host·운영 연동·최종 제출은 미확인입니다. [완성본 작업 기록과 재현 방법](on-client/docs/FINISH_STATUS.md)을 참고하세요.

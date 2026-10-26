@@ -1,7 +1,8 @@
 // 이 파일은 학생이 같은 프로젝트에서 이어서 구현합니다.
 // 제공 UI를 받은 것만으로 단계 완료를 인정하지 않습니다.
-export function createStudentView() {
-  return {
+export function createStudentView({ api, onChange } = {}) {
+  let viewGeneration = 0;
+  const views = {
     renderIdentity({ me = {}, devices = {}, sessions = {} } = {}) {
       const root = document.createElement('section');
       const add = text => { const n = document.createElement('p'); n.textContent = text; root.append(n); };
@@ -91,38 +92,123 @@ export function createStudentView() {
     },
     renderStatus({ devices = {}, sessions = {}, notifications = [], diagnostics = {}, mode } = {}) {
       const root = document.createElement('section');
+      root.setAttribute('aria-label', '보호 현황 관제');
       const add = (tag, text, parent = root) => { const n = document.createElement(tag); n.textContent = text; parent.append(n); return n; };
-      const safe = value => typeof value === 'string' && value.length <= 2000 && !/(?:Bearer\s+\S+|sk-(?:proj-|on-)?[A-Za-z0-9_-]{8,}|-----BEGIN|(?:password|secret|token|api[_ -]?key)\s*[:=]|eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)/i.test(value) ? value : '비밀 없는 값을 확인할 수 없습니다';
-      const showMode = value => { if (value === 'demo') add('p', '예제 자료'); if (value === 'disconnected') add('p', '연결 없음'); if (value === 'unknown') add('p', '확인 불가'); };
-      showMode(mode);
+      const safe = value => typeof value === 'string' && value.length > 0 && value.length <= 2000
+        && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]|Bearer\s+\S+|sk-(?:proj-|on-|ant-|svcacct-)?[A-Za-z0-9_-]{8,}|-----BEGIN|(?:password|secret|token|api[_ -]?key|authorization|비밀번호|토큰)\s*[:=]|eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/i.test(value)
+        ? value : '비밀 없는 값을 확인할 수 없습니다';
+      const showMode = (value, parent) => {
+        const labels = { demo: '예제 자료 · 실제 운영 관측이 아닙니다', connected: '원천 서버 연결 자료', disconnected: '연결 없음', unknown: '확인 불가' };
+        add('p', labels[value] ?? '자료 출처 확인 불가', parent);
+      };
+      const timestamp = (value, parent) => {
+        if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/.test(value) && Number.isFinite(Date.parse(value))) add('p', `원천 확인 시각: ${value}`, parent);
+      };
       const names = { compliant: '보안 기준 충족', noncompliant: '보안 기준 미충족', unknown: '확인 불가', active: '활성', expired: '만료', revoked: '철회됨' };
-      for (const [title, resource] of [['기기', devices], ['세션', sessions]]) {
-        add('h4', title); showMode(resource.mode);
-        if (resource.status === 'loading') add('p', `${title === '기기' ? '기기를' : '세션을'} 불러오는 중`);
-        else if (resource.status === 'error') { add('p', `${title === '기기' ? '기기를' : '세션을'} 불러오지 못했습니다${/TIMEOUT/.test(resource.error?.code ?? '') ? ' (시간 초과)' : ''}: ${safe(resource.error?.message)}`); add('p', '다시 시도는 위쪽 다시 불러오기 버튼을 직접 누르세요. 자동으로 다시 요청하지 않습니다.'); }
-        else if (resource.status !== 'ok' || !Array.isArray(resource.data)) add('p', `${title} 확인 불가`);
-        else if (!resource.data.length) add('p', title === '기기' ? '등록된 기기가 없습니다' : '현재 연결이 없습니다');
-        else for (const row of resource.data) add('p', `${title === '기기' ? safe(row.label) + ' / ' : ''}ID: ${safe(row.id)} / ${names[row.status] ?? '확인 불가'}(${safe(row.status)})`);
+      add('h3', '보호 현황');
+      showMode(mode, root);
+      add('p', '원천이 제공한 기기·세션·보안 기록만 표시합니다. PC 자원 사용률과 전체 보안 상태는 수집하지 않았습니다.');
+      const grid = add('div', '');
+      grid.setAttribute('class', 'grid-2');
+      const card = (key, title) => {
+        const box = add('section', '', grid); box.setAttribute('data-student-status-card', key);
+        box.setAttribute('class', 'card');
+        add('h4', title, box); return box;
+      };
+      const drawResource = (title, resource, box) => {
+        showMode(resource.mode, box);
+        if (resource.status === 'loading') add('p', `${title === '기기' ? '기기를' : '세션을'} 불러오는 중`, box);
+        else if (resource.status === 'error') {
+          add('p', `${title === '기기' ? '기기를' : '세션을'} 불러오지 못했습니다${/TIMEOUT/.test(resource.error?.code ?? '') ? ' (시간 초과)' : ''}: ${safe(resource.error?.message)}`, box);
+          add('p', '위쪽 다시 불러오기 버튼을 직접 누르세요. 자동으로 다시 요청하지 않습니다.', box);
+        } else if (resource.status !== 'ok' || !Array.isArray(resource.data)) add('p', `${title} 확인 불가 · 아직 조회하지 않았거나 결과를 확인할 수 없습니다.`, box);
+        else {
+          add('p', `현재 입력에 포함된 ${title}: ${resource.data.length}개`, box);
+          if (!resource.data.length) add('p', title === '기기' ? '등록된 기기가 없습니다' : '현재 연결이 없습니다', box);
+          for (const row of resource.data) add('p', `${title === '기기' ? safe(row?.label) + ' / ' : ''}ID: ${safe(row?.id)} / ${names[row?.status] ?? '확인 불가'}(${safe(row?.status)})`, box);
+        }
+      };
+      drawResource('기기', devices, card('device', '등록 기기'));
+      const sessionCard = card('session', '현재 세션');
+      drawResource('세션', sessions, sessionCard);
+      add('p', '세션은 지금 검증된 연결 하나만 표시합니다. 전체 접속 이력이 아닙니다.', sessionCard);
+      const notificationCard = card('notifications', '주의할 알림');
+      const notes = Array.isArray(notifications) ? notifications : [];
+      if (!Array.isArray(notifications)) add('p', '알림 자료의 형식을 확인할 수 없습니다.', notificationCard);
+      else {
+        add('p', `현재 입력에 포함된 알림: ${notes.length}건`, notificationCard);
+        if (!notes.length) add('p', '현재 입력에 주의할 알림이 없습니다. 미조회·실패한 자료의 안전을 뜻하지 않습니다.', notificationCard);
       }
-      add('p', '세션은 지금 검증된 연결 하나만 표시합니다.'); add('h4', '알림');
-      if (!notifications.length) add('p', '주의할 알림이 없습니다');
-      for (const note of notifications) add('p', `${safe(note.resource)} / ${safe(note.code)}: ${safe(note.message)}`);
-      add('h4', '도움정보'); showMode(diagnostics.mode); let copyText = '';
+      for (const note of notes) add('p', `${safe(note?.resource)} / ${safe(note?.code)}: ${safe(note?.message)}`, notificationCard);
+      if (devices.status !== 'ok' || sessions.status !== 'ok') add('p', '기기 또는 세션 조회가 끝나지 않아 현재 알림만으로 전체 상태를 판단할 수 없습니다.', notificationCard);
+      const sdp = card('sdp', 'SDP 연결 · 도움정보');
+      showMode(diagnostics.mode, sdp); let copyText = '';
       if (diagnostics.status === 'ok' && diagnostics.data) {
         const d = diagnostics.data;
         const safeData = { requestId: safe(d.requestId), component: safe(d.component), version: safe(d.version), checkedAt: safe(d.checkedAt), engine: { mode: safe(d.engine?.mode), code: safe(d.engine?.code) } };
-        copyText = JSON.stringify(safeData, null, 2); add('pre', copyText);
-      } else if (diagnostics.status === 'loading') add('p', '도움정보를 불러오는 중');
-      else if (diagnostics.status === 'error') add('p', `도움정보를 불러오지 못했습니다: ${safe(diagnostics.error?.message)}. 위쪽 도움정보 불러오기 버튼을 직접 누르세요.`);
-      else add('p', '제공 화면에서 도움정보 불러오기를 누르세요.');
-      add('p', '도움 요청에 쓸 비밀 없는 점검 값만 복사합니다.');
-      const button = add('button', '도움정보 복사'); button.type = 'button'; button.disabled = !copyText;
-      const result = add('p', ''); result.setAttribute('role', 'status');
-      button.addEventListener('click', async () => {
+        add('p', `원천 엔진 상태: ${safeData.engine.mode} / ${safeData.engine.code}`, sdp);
+        timestamp(d.checkedAt, sdp);
+        copyText = JSON.stringify(safeData, null, 2); add('pre', copyText, sdp);
+      } else if (diagnostics.status === 'loading') add('p', '도움정보를 불러오는 중', sdp);
+      else if (diagnostics.status === 'error') add('p', `도움정보를 불러오지 못했습니다: ${safe(diagnostics.error?.message)}. 위쪽 도움정보 불러오기 버튼을 직접 누르세요.`, sdp);
+      else add('p', '아직 도움정보를 조회하지 않았습니다. 제공 화면에서 도움정보 불러오기를 누르세요.', sdp);
+      add('p', '이 값은 원천의 점검 응답입니다. 실제 터널 연결이나 모든 네트워크 보호를 확인한 결과가 아닙니다.', sdp);
+      add('p', '도움 요청에 쓸 비밀 없는 점검 값만 복사합니다.', sdp);
+      const copy = add('button', '도움정보 복사', sdp); copy.type = 'button'; copy.setAttribute('class', 'btn'); copy.disabled = !copyText;
+      const copyResult = add('p', '', sdp); copyResult.setAttribute('role', 'status');
+      copy.addEventListener('click', async () => {
         if (!copyText) return;
-        try { if (!globalThis.navigator?.clipboard?.writeText) throw Error('unavailable'); await globalThis.navigator.clipboard.writeText(copyText); result.textContent = '도움정보를 복사했습니다.'; }
-        catch { result.textContent = '복사하지 못했습니다. 표시된 도움정보를 직접 선택해 복사하세요.'; }
+        try { if (!globalThis.navigator?.clipboard?.writeText) throw Error('unavailable'); await globalThis.navigator.clipboard.writeText(copyText); if (root.isConnected) copyResult.textContent = '도움정보를 복사했습니다.'; }
+        catch { if (root.isConnected) copyResult.textContent = '복사하지 못했습니다. 표시된 도움정보를 직접 선택해 복사하세요.'; }
       });
+      const supplement = add('section', ''); supplement.setAttribute('data-student-status-supplement', '');
+      add('h4', '수동 읽기 전용 점검', supplement);
+      add('p', '기기·세션 보조 조회는 이 영역에만 표시합니다. 중앙 기록·알림·도움정보를 갱신하지 않습니다. 전체 상태는 위쪽 다시 불러오기와 도움정보 불러오기를 사용하세요.', supplement);
+      const refresh = add('button', '기기·세션 보조 조회', supplement); refresh.type = 'button'; refresh.setAttribute('class', 'btn');
+      refresh.disabled = typeof api?.get !== 'function';
+      const readStatus = add('p', refresh.disabled ? '보조 조회 연결을 사용할 수 없습니다.' : '아직 보조 조회를 실행하지 않았습니다.', supplement);
+      readStatus.setAttribute('role', 'status');
+      const readResult = add('div', '', supplement);
+      let pending = false;
+      const validResult = (value, kind) => value?.ok === true && Array.isArray(value.data) && value.data.length <= 1000
+        && value.data.every(row => row && typeof row.id === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$/.test(row.id)
+          && safe(row.id) === row.id && (kind === 'device' ? ['compliant', 'noncompliant', 'unknown'] : ['active', 'revoked', 'expired', 'unknown']).includes(row.status)
+          && (kind !== 'device' || typeof row.label === 'string' && safe(row.label) === row.label))
+        && ['connected', 'demo', 'disconnected', 'unknown'].includes(value.meta?.mode);
+      const readFailure = value => {
+        const codes = { TIMEOUT: '조회 시간이 초과됐습니다.', CANCELLED: '조회가 취소됐습니다.', NETWORK_ERROR: '서버에 연결할 수 없습니다.', NOT_ALLOWED: '허용되지 않은 조회입니다.', AUTH_REQUIRED: '현재 인증을 확인할 수 없습니다.', UNAUTHORIZED: '현재 인증을 확인할 수 없습니다.' };
+        const code = Object.hasOwn(codes, value?.error?.code) ? value.error.code : 'UNVERIFIED';
+        return `${code}: ${codes[code] ?? '응답 형식 또는 조회 결과를 확인할 수 없습니다.'}`;
+      };
+      refresh.addEventListener('click', async () => {
+        if (pending || typeof api?.get !== 'function' || !root.isConnected) return;
+        pending = true; refresh.disabled = true; readResult.replaceChildren();
+        readStatus.textContent = '기기·세션 보조 조회 중입니다. 이전 보조 결과는 현재 결과가 아닙니다.';
+        const requestGeneration = viewGeneration;
+        const current = () => root.isConnected && requestGeneration === viewGeneration;
+        try {
+          const results = await Promise.allSettled([Promise.resolve().then(() => api.get('/api/devices')), Promise.resolve().then(() => api.get('/api/sessions'))]);
+          if (!current()) return;
+          for (const [index, title, kind] of [[0, '기기', 'device'], [1, '세션', 'session']]) {
+            const result = results[index].status === 'fulfilled' ? results[index].value : null;
+            const box = add('section', '', readResult); add('h5', `${title} 보조 조회 결과`, box);
+            if (!validResult(result, kind)) { add('p', readFailure(result), box); continue; }
+            drawResource(title, { status: 'ok', mode: result.meta.mode, data: result.data }, box);
+            timestamp(result.meta.checkedAt, box);
+          }
+          readStatus.textContent = '보조 조회가 끝났습니다. 각 결과의 출처와 실패 여부를 확인하세요. 중앙 화면은 갱신하지 않았습니다.';
+        } finally {
+          pending = false;
+          if (root.isConnected) {
+            refresh.disabled = false;
+            if (requestGeneration !== viewGeneration) {
+              readResult.replaceChildren();
+              readStatus.textContent = '화면 상태가 바뀌어 보조 결과를 버렸습니다. 필요하면 직접 다시 조회하세요.';
+            }
+          }
+        }
+      });
+      add('p', '핵심 흐름: 1. 실제 접속 판정 확인 2. 보안 기록의 근거 확인 3. 사람 확인이 필요한 제안과 실제 처리 결과 구분.');
       return root;
     },
     renderVulnerabilities({ status = 'idle', mode = 'unknown', data, error } = {}) {
@@ -422,4 +508,9 @@ export function createStudentView() {
       return root;
     },
   };
+  // Any new host render invalidates pending auxiliary reads from an older view.
+  return Object.fromEntries(Object.entries(views).map(([name, render]) => [name, function (...args) {
+    viewGeneration += 1;
+    return render.apply(this, args);
+  }]));
 }

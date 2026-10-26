@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 class Element {
-  constructor(tag) { this.tagName=tag.toUpperCase();this.children=[];this.attributes={};this.listeners={};this._text='';this.value='';this.disabled=false; }
+  constructor(tag) { this.tagName=tag.toUpperCase();this.children=[];this.attributes={};this.listeners={};this._text='';this.value='';this.disabled=false;this.isConnected=true; }
   set textContent(v) {this._text=String(v??'');this.children=[];}
   get textContent() {return this._text+this.children.map(n=>n.textContent).join('');}
   set innerHTML(v){throw Error('HTML sink');}
