@@ -5,14 +5,28 @@ import { resolve } from 'node:path';
 import { createOnServer } from '../src/server.mjs';
 import { demoEngine } from '../src/engine.mjs';
 import { createPcCollector, sanitizePcStatus } from './pc-status.mjs';
+import { readSdpHostConfiguration } from '../src/engine/sdp-host-config.mjs';
+import { createSdpHostEngine, isOwnedSdpHostEngine } from '../src/engine/sdp-host.mjs';
+import { createEngine } from './engine-adapter.mjs';
 
 const CSP="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; object-src 'none'; frame-ancestors 'none'; base-uri 'none'";
 const messages={PC_REQUEST_REJECTED:'허용된 로컬 화면에서만 조회할 수 있습니다.',PC_METHOD_REJECTED:'읽기 전용 GET 요청만 허용됩니다.',PC_BUSY:'PC 점검이 진행 중입니다. 끝난 뒤 직접 다시 조회하세요.',PC_TIMEOUT:'PC 점검 시간이 초과됐습니다. 결과를 확인할 수 없습니다.',PC_UNAVAILABLE:'PC 점검 결과를 확인할 수 없습니다.',PC_ASSET_UNAVAILABLE:'학생 화면을 불러올 수 없습니다.'};
 export function parseStudentPort(value='5189') { if(typeof value!=='string'||!/^\d{1,5}$/.test(value)||Number(value)<1024||Number(value)>65535)throw Error('PC_INVALID_PORT');return Number(value); }
-export function createStudentServer({demo=false,collectPcStatus=createPcCollector(),sensorTimeoutMs=5000}={}) {
+export function parseStudentArguments(args) {
+  let demo=false,sdpPath;
+  for(let i=0;i<args.length;i++){
+    if(args[i]==='--demo'&&!demo){demo=true;continue;}
+    if(args[i]==='--sdp-host-config'&&sdpPath===undefined&&typeof args[i+1]==='string'&&!args[i+1].startsWith('--')){sdpPath=args[++i];continue;}
+    throw Error('PC_INVALID_ARGUMENTS');
+  }
+  if(demo&&sdpPath!==undefined)throw Error('PC_INVALID_ARGUMENTS');
+  return {demo,sdpPath};
+}
+export function createStudentServer({demo=false,sdpHost,collectPcStatus=createPcCollector(),sensorTimeoutMs=5000}={}) {
   if(typeof demo!=='boolean'||typeof collectPcStatus!=='function'||!Number.isInteger(sensorTimeoutMs)||sensorTimeoutMs<50||sensorTimeoutMs>10000)throw Error('PC_INVALID_CONFIGURATION');
+  if(sdpHost!==undefined&&(demo||!isOwnedSdpHostEngine(sdpHost)))throw Error('PC_INVALID_CONFIGURATION');
   // No AI keys, adapters, vault or account sessions are picked up from the environment.
-  const server=createOnServer({engine:demo?demoEngine():{evidenceMode:'disconnected'},aiEnv:{}});
+  const server=createOnServer({engine:sdpHost?createEngine(sdpHost):demo?demoEngine():{evidenceMode:'disconnected'},aiEnv:{}});
   const delegate=server.listeners('request')[0];server.removeAllListeners('request');
   let inFlight=false;
   const headers={'cache-control':'no-store','content-security-policy':CSP,'x-content-type-options':'nosniff','referrer-policy':'no-referrer'};
@@ -46,10 +60,14 @@ export function createStudentServer({demo=false,collectPcStatus=createPcCollecto
   return server;
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
+  let host;
   try{
-    const args=process.argv.slice(2);if(args.length>1||args.some(arg=>arg!=='--demo'))throw Error('PC_INVALID_ARGUMENTS');
-    const port=parseStudentPort(process.env.ON_PORT??'5189');const server=createStudentServer({demo:args.includes('--demo')});
-    server.once('error',()=>{console.error('학생 로컬 서버를 시작하지 못했습니다. 포트와 실행 환경을 확인하세요.');process.exitCode=1;});
+    const {demo,sdpPath}=parseStudentArguments(process.argv.slice(2));
+    const port=parseStudentPort(process.env.ON_PORT??'5189');
+    if(sdpPath!==undefined)host=createSdpHostEngine(await readSdpHostConfiguration(sdpPath,{projectRoot:resolve(fileURLToPath(new URL('..',import.meta.url)))}));
+    const server=createStudentServer({demo,sdpHost:host});
+    server.once('close',()=>host?.close());
+    server.once('error',()=>{host?.close();console.error('학생 로컬 서버를 시작하지 못했습니다. 포트와 실행 환경을 확인하세요.');process.exitCode=1;});
     server.listen(port,'127.0.0.1',()=>console.log(`학생 로컬 화면: http://127.0.0.1:${port}`));
-  }catch{console.error('학생 로컬 서버의 실행 설정을 확인하세요.');process.exitCode=1;}
+  }catch{host?.close();console.error('학생 로컬 서버의 실행 설정을 확인하세요.');process.exitCode=1;}
 }
