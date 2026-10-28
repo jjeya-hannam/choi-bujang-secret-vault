@@ -63,3 +63,23 @@ test('인증 실패 진단에는 고정 사유 코드만 전달한다', async ()
   assert.equal(await verify(await authorization(deploymentHostname)), null);
   assert.deepEqual(messages, ['judge_audience_rejected']);
 });
+
+test('심판의 서명된 a/b 주체는 같은 sub/run에서도 다른 메모 소유자다', async () => {
+  const verify = createLoginVerifier({ config, deploymentHostname, judgeKeySet, supabaseClient });
+  const sub = randomUUID();
+  const run = randomUUID();
+  const common = { sub, aleph_run: run };
+  const a = await verify(await authorization(deploymentHostname, { ...common, aleph_identity: 'a' }));
+  const b = await verify(await authorization(deploymentHostname, { ...common, aleph_identity: 'b' }));
+  const aAgain = await verify(await authorization(deploymentHostname, { ...common, aleph_identity: 'a' }));
+  const newRun = await verify(await authorization(deploymentHostname,
+    { ...common, aleph_run: randomUUID(), aleph_identity: 'a' }));
+  for (const identity of [a, b, aAgain, newRun]) {
+    assert.equal(identity.kind, 'judge');
+    assert.match(identity.userId, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u);
+  }
+  assert.equal(a.userId, aAgain.userId);
+  assert.notEqual(a.userId, b.userId);
+  assert.notEqual(a.userId, newRun.userId);
+  assert.notEqual(a.userId, sub);
+});
